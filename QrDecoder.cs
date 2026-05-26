@@ -113,7 +113,6 @@ namespace QR_deFuzzer
                     }
                 }
 
-                AppLogger.Info($"No QR codes decoded from bitmap {bitmap.Width}x{bitmap.Height}.");
                 return Array.Empty<string>();
             }
             catch (Exception ex)

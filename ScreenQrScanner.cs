@@ -44,6 +44,8 @@ namespace QR_deFuzzer
                     if (seenTexts.Add(result.Text))
                     {
                         results.Add(result);
+                        AppLogger.Info($"Stopping automatic scan after first QR result from {result.Source}.");
+                        return results;
                     }
                 }
             }
@@ -57,6 +59,7 @@ namespace QR_deFuzzer
             foreach (string text in QrDecoder.DecodeAll(monitorBitmap))
             {
                 yield return new ScreenQrScanResult(text, $"{sourceName}:full", monitorBounds);
+                yield break;
             }
 
             foreach (Rectangle tile in GetTiles(monitorBitmap.Width, monitorBitmap.Height))
@@ -77,6 +80,7 @@ namespace QR_deFuzzer
                 foreach (string text in tileTexts)
                 {
                     yield return new ScreenQrScanResult(text, $"{sourceName}:tile:{tile}", screenTile);
+                    yield break;
                 }
             }
         }
