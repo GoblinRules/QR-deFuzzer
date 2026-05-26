@@ -51,7 +51,7 @@ namespace QR_deFuzzer
             _trayIcon?.ShowBalloonTip(
                 3500,
                 "QR-deFuzzer is running",
-                "Use the tray icon to scan visible screens for QR codes.",
+                "Left-click to scan visible screens, or right-click for manual snip.",
                 System.Windows.Forms.ToolTipIcon.Info);
         }
 
@@ -102,10 +102,14 @@ namespace QR_deFuzzer
                 // Context Menu
                 _contextMenu = new System.Windows.Forms.ContextMenuStrip();
 
-                var snipItem = new System.Windows.Forms.ToolStripMenuItem("Scan Screens for QR");
-                snipItem.Click += (s, ea) => StartSnipping();
-                snipItem.Font = new System.Drawing.Font(snipItem.Font, System.Drawing.FontStyle.Bold);
-                _contextMenu.Items.Add(snipItem);
+                var scanItem = new System.Windows.Forms.ToolStripMenuItem("Scan Screens for QR");
+                scanItem.Click += (s, ea) => ScanScreensForQr();
+                scanItem.Font = new System.Drawing.Font(scanItem.Font, System.Drawing.FontStyle.Bold);
+                _contextMenu.Items.Add(scanItem);
+
+                var manualSnipItem = new System.Windows.Forms.ToolStripMenuItem("Manual Snip Current Monitor");
+                manualSnipItem.Click += (s, ea) => ManualSnipCurrentMonitor();
+                _contextMenu.Items.Add(manualSnipItem);
 
                 _contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
@@ -163,6 +167,11 @@ namespace QR_deFuzzer
 
         private void StartSnipping()
         {
+            ScanScreensForQr();
+        }
+
+        private void ScanScreensForQr()
+        {
             if (_isSnippingOpen) return;
 
             _isSnippingOpen = true;
@@ -187,6 +196,46 @@ namespace QR_deFuzzer
             {
                 AppLogger.Error("Snipping overlay error.", ex);
                 MessageBox.Show($"Snipping overlay error: {ex.Message}\n\nLog file:\n{AppLogger.LogPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _isSnippingOpen = false;
+            }
+        }
+
+        private void ManualSnipCurrentMonitor()
+        {
+            if (_isSnippingOpen) return;
+
+            _isSnippingOpen = true;
+            try
+            {
+                var cursorPosition = System.Windows.Forms.Cursor.Position;
+                var screen = System.Windows.Forms.Screen.FromPoint(cursorPosition);
+                AppLogger.Info($"Opening manual snip on monitor {screen.DeviceName}, Bounds={screen.Bounds}.");
+
+                using var snipper = new ManualSnipOverlay(screen);
+                snipper.ShowDialog();
+
+                if (snipper.SnippedSuccessfully)
+                {
+                    if (!string.IsNullOrWhiteSpace(snipper.DecodedText))
+                    {
+                        AppLogger.Info("Manual snip decoded QR code successfully.");
+                        var resultWindow = new ResultWindow(snipper.DecodedText);
+                        resultWindow.ShowDialog();
+                    }
+                    else
+                    {
+                        AppLogger.Info("Manual snip completed but no QR code was detected.");
+                        _trayIcon?.ShowBalloonTip(3000, "QR-deFuzzer", "No QR Code detected in the selected area.", System.Windows.Forms.ToolTipIcon.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("Manual snip error.", ex);
+                MessageBox.Show($"Manual snip error: {ex.Message}\n\nLog file:\n{AppLogger.LogPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
