@@ -30,6 +30,8 @@ namespace QR_deFuzzer
             if (!createdNew)
             {
                 AppLogger.Info("A second instance was started while another instance is already running.");
+                _mutex.Dispose();
+                _mutex = null;
                 MessageBox.Show("QR-deFuzzer is already running in the system tray.", "Already Running", MessageBoxButton.OK, MessageBoxImage.Information);
                 Shutdown();
                 return;
@@ -41,6 +43,7 @@ namespace QR_deFuzzer
             // 2. Initialize WinForms subsystem (required before creating NotifyIcon)
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+            System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
 
             // 3. Initialize Tray Icon
             InitializeTrayIcon();
@@ -263,7 +266,14 @@ namespace QR_deFuzzer
 
             if (_mutex != null)
             {
-                _mutex.ReleaseMutex();
+                try
+                {
+                    _mutex.ReleaseMutex();
+                }
+                catch (ApplicationException ex)
+                {
+                    AppLogger.Error("Attempted to release a mutex owned by another instance.", ex);
+                }
                 _mutex.Dispose();
                 _mutex = null;
             }
