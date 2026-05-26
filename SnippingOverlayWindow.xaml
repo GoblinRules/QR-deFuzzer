@@ -8,42 +8,57 @@
         Topmost="True"
         ShowInTaskbar="False"
         Cursor="Cross"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
         Loaded="Window_Loaded"
         KeyDown="Window_KeyDown"
         MouseDown="Window_MouseDown"
         MouseMove="Window_MouseMove"
         MouseUp="Window_MouseUp">
-    <Canvas Name="SelectionCanvas">
-        <!-- Background screenshot image -->
-        <Image Name="BackgroundImage" Stretch="Fill" />
-        
+    <Canvas Name="SelectionCanvas" Background="Transparent">
         <!-- Dark overlay path with EvenOdd rule for cutout -->
-        <Path Name="OverlayPath" Fill="#7F000000" />
-        
-        <!-- Selection border (Neon Purple/Blue) -->
-        <Rectangle Name="SelectionBorder" 
-                   Stroke="#A080FFFF" 
-                   StrokeThickness="2" 
-                   Visibility="Collapsed">
+        <Path Name="OverlayPath" Fill="#99000000" IsHitTestVisible="False" />
+
+        <!-- High-contrast crosshair that remains readable on light and dark screens -->
+        <Line Name="CrosshairVerticalShadow" Stroke="#DD000000" StrokeThickness="4" IsHitTestVisible="False" />
+        <Line Name="CrosshairHorizontalShadow" Stroke="#DD000000" StrokeThickness="4" IsHitTestVisible="False" />
+        <Line Name="CrosshairVertical" Stroke="#FFFFFF00" StrokeThickness="1.5" IsHitTestVisible="False" />
+        <Line Name="CrosshairHorizontal" Stroke="#FFFFFF00" StrokeThickness="1.5" IsHitTestVisible="False" />
+
+        <!-- Selection border -->
+        <Rectangle Name="SelectionGlowBorder"
+                   Stroke="#FF00E5FF"
+                   StrokeThickness="6"
+                   Opacity="0.75"
+                   Visibility="Collapsed"
+                   IsHitTestVisible="False">
             <Rectangle.Effect>
-                <DropShadowEffect Color="#FF00D0FF" BlurRadius="6" ShadowDepth="0" Opacity="0.8" />
+                <DropShadowEffect Color="#FF00E5FF" BlurRadius="10" ShadowDepth="0" Opacity="0.95" />
             </Rectangle.Effect>
         </Rectangle>
-        
+        <Rectangle Name="SelectionBorder"
+                   Stroke="#FFFFFFFF"
+                   StrokeThickness="2"
+                   Visibility="Collapsed"
+                   IsHitTestVisible="False" />
+
         <!-- Tooltip instructions -->
-        <Border Name="InfoTooltip" 
-                Background="#E6101015" 
-                CornerRadius="6" 
-                Padding="12,8" 
-                BorderBrush="#25FFFFFF" 
-                BorderThickness="1" 
-                Visibility="Collapsed">
+        <Border Name="InfoTooltip"
+                Background="#E6101015"
+                CornerRadius="6"
+                Padding="12,8"
+                BorderBrush="#25FFFFFF"
+                BorderThickness="1"
+                Visibility="Collapsed"
+                IsHitTestVisible="False">
             <Border.Effect>
                 <DropShadowEffect Color="Black" BlurRadius="8" ShadowDepth="2" Opacity="0.5" />
             </Border.Effect>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Foreground="#FFB0A0FF" FontWeight="Bold" FontSize="11" Text="QR-deFuzzer" Margin="0,0,8,0" />
-                <TextBlock Foreground="#FFDDDDDD" FontSize="11" Text="•  Drag to select QR Code  •  Right-click or Esc to cancel" />
+                <TextBlock Foreground="#FFDDDDDD" FontSize="11" Text="| Drag to select QR Code | Right-click or Esc to cancel" />
             </StackPanel>
         </Border>
     </Canvas>

@@ -2,20 +2,21 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace QR_deFuzzer
 {
     public partial class SnippingOverlayWindow : Window
     {
-        private Bitmap? _fullScreenshot;
         private System.Windows.Point _startPoint;
         private bool _isDragging = false;
         private Rect _selectionRect;
+        private System.Drawing.Rectangle _screenBounds;
         
         public string? DecodedText { get; private set; }
         public bool SnippedSuccessfully { get; private set; } = false;
@@ -23,8 +24,9 @@ namespace QR_deFuzzer
         public SnippingOverlayWindow()
         {
             InitializeComponent();
-            
+
             // Set window positioning and size to cover all monitors (Virtual Screen)
+            _screenBounds = System.Windows.Forms.SystemInformation.VirtualScreen;
             this.Left = SystemParameters.VirtualScreenLeft;
             this.Top = SystemParameters.VirtualScreenTop;
             this.Width = SystemParameters.VirtualScreenWidth;
@@ -33,8 +35,9 @@ namespace QR_deFuzzer
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            CaptureScreen();
-            
+            SelectionCanvas.Width = this.Width;
+            SelectionCanvas.Height = this.Height;
+
             // Position the Info Tooltip in the upper-middle of the virtual screen
             Canvas.SetLeft(InfoTooltip, (this.Width - InfoTooltip.ActualWidth) / 2);
             Canvas.SetTop(InfoTooltip, 100);
@@ -42,63 +45,10 @@ namespace QR_deFuzzer
             
             // Draw initial solid overlay
             UpdateOverlay(new Rect(0, 0, 0, 0));
+            UpdateCrosshair(new System.Windows.Point(this.Width / 2, this.Height / 2));
             
             // Force focus to capture Escape key
             this.Focus();
-        }
-
-        private void CaptureScreen()
-        {
-            try
-            {
-                int left = (int)SystemParameters.VirtualScreenLeft;
-                int top = (int)SystemParameters.VirtualScreenTop;
-                int width = (int)SystemParameters.VirtualScreenWidth;
-                int height = (int)SystemParameters.VirtualScreenHeight;
-
-                double dpiScaleX = 1.0;
-                double dpiScaleY = 1.0;
-                var source = PresentationSource.FromVisual(this);
-                if (source?.CompositionTarget != null)
-                {
-                    dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
-                    dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
-                }
-
-                int physicalLeft = (int)(left * dpiScaleX);
-                int physicalTop = (int)(top * dpiScaleY);
-                int physicalWidth = (int)(width * dpiScaleX);
-                int physicalHeight = (int)(height * dpiScaleY);
-
-                _fullScreenshot = new Bitmap(physicalWidth, physicalHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (Graphics g = Graphics.FromImage(_fullScreenshot))
-                {
-                    g.CopyFromScreen(physicalLeft, physicalTop, 0, 0, new System.Drawing.Size(physicalWidth, physicalHeight), CopyPixelOperation.SourceCopy);
-                }
-
-                BackgroundImage.Source = BitmapToImageSource(_fullScreenshot);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to capture screen: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Close();
-            }
-        }
-
-        private BitmapSource BitmapToImageSource(Bitmap bitmap)
-        {
-            using (MemoryStream memory = new MemoryStream())
-            {
-                bitmap.Save(memory, ImageFormat.Png);
-                memory.Position = 0;
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                bitmapImage.Freeze();
-                return bitmapImage;
-            }
         }
 
         private void UpdateOverlay(Rect selectionRect)
@@ -116,9 +66,14 @@ namespace QR_deFuzzer
                 _isDragging = true;
                 _startPoint = e.GetPosition(SelectionCanvas);
                 
+                SelectionGlowBorder.Visibility = Visibility.Visible;
                 SelectionBorder.Visibility = Visibility.Visible;
+                Canvas.SetLeft(SelectionGlowBorder, _startPoint.X);
+                Canvas.SetTop(SelectionGlowBorder, _startPoint.Y);
                 Canvas.SetLeft(SelectionBorder, _startPoint.X);
                 Canvas.SetTop(SelectionBorder, _startPoint.Y);
+                SelectionGlowBorder.Width = 0;
+                SelectionGlowBorder.Height = 0;
                 SelectionBorder.Width = 0;
                 SelectionBorder.Height = 0;
                 
@@ -132,10 +87,11 @@ namespace QR_deFuzzer
 
         private void Window_MouseMove(object sender, MouseEventArgs e)
         {
+            System.Windows.Point currentPoint = e.GetPosition(SelectionCanvas);
+            UpdateCrosshair(currentPoint);
+
             if (_isDragging)
             {
-                System.Windows.Point currentPoint = e.GetPosition(SelectionCanvas);
-                
                 double x = Math.Min(_startPoint.X, currentPoint.X);
                 double y = Math.Min(_startPoint.Y, currentPoint.Y);
                 double width = Math.Abs(_startPoint.X - currentPoint.X);
@@ -147,6 +103,11 @@ namespace QR_deFuzzer
                 height = Math.Min(this.Height - y, height);
 
                 _selectionRect = new Rect(x, y, width, height);
+
+                Canvas.SetLeft(SelectionGlowBorder, x);
+                Canvas.SetTop(SelectionGlowBorder, y);
+                SelectionGlowBorder.Width = width;
+                SelectionGlowBorder.Height = height;
 
                 Canvas.SetLeft(SelectionBorder, x);
                 Canvas.SetTop(SelectionBorder, y);
@@ -162,6 +123,7 @@ namespace QR_deFuzzer
             if (e.ChangedButton == MouseButton.Left && _isDragging)
             {
                 _isDragging = false;
+                SelectionGlowBorder.Visibility = Visibility.Collapsed;
                 SelectionBorder.Visibility = Visibility.Collapsed;
 
                 if (_selectionRect.Width > 5 && _selectionRect.Height > 5)
@@ -179,38 +141,42 @@ namespace QR_deFuzzer
         {
             try
             {
-                if (_fullScreenshot == null)
+                Matrix transformToDevice = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice
+                    ?? Matrix.Identity;
+
+                System.Windows.Point selectionTopLeft = transformToDevice.Transform(new System.Windows.Point(_selectionRect.Left, _selectionRect.Top));
+                System.Windows.Point selectionBottomRight = transformToDevice.Transform(new System.Windows.Point(_selectionRect.Right, _selectionRect.Bottom));
+                System.Windows.Point windowTopLeft = transformToDevice.Transform(new System.Windows.Point(Left, Top));
+
+                int screenX = (int)Math.Round(windowTopLeft.X + Math.Min(selectionTopLeft.X, selectionBottomRight.X));
+                int screenY = (int)Math.Round(windowTopLeft.Y + Math.Min(selectionTopLeft.Y, selectionBottomRight.Y));
+                int cropWidth = (int)Math.Round(Math.Abs(selectionBottomRight.X - selectionTopLeft.X));
+                int cropHeight = (int)Math.Round(Math.Abs(selectionBottomRight.Y - selectionTopLeft.Y));
+
+                int padding = Math.Max(24, Math.Min(cropWidth, cropHeight) / 8);
+                screenX -= padding;
+                screenY -= padding;
+                cropWidth += padding * 2;
+                cropHeight += padding * 2;
+
+                screenX = Math.Max(_screenBounds.Left, Math.Min(_screenBounds.Right - 1, screenX));
+                screenY = Math.Max(_screenBounds.Top, Math.Min(_screenBounds.Bottom - 1, screenY));
+                cropWidth = Math.Max(1, Math.Min(_screenBounds.Right - screenX, cropWidth));
+                cropHeight = Math.Max(1, Math.Min(_screenBounds.Bottom - screenY, cropHeight));
+
+                AppLogger.Info($"Capturing selected crop: {screenX},{screenY} {cropWidth}x{cropHeight}. Window={Left},{Top}. Dpi={transformToDevice.M11},{transformToDevice.M22}. Selection={_selectionRect}");
+
+                HideCaptureChrome();
+
+                using (Bitmap croppedBitmap = new Bitmap(cropWidth, cropHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
                 {
-                    CancelSnipping();
-                    return;
-                }
-
-                double dpiScaleX = 1.0;
-                double dpiScaleY = 1.0;
-                var source = PresentationSource.FromVisual(this);
-                if (source?.CompositionTarget != null)
-                {
-                    dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
-                    dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
-                }
-
-                int cropX = (int)(_selectionRect.X * dpiScaleX);
-                int cropY = (int)(_selectionRect.Y * dpiScaleY);
-                int cropWidth = (int)(_selectionRect.Width * dpiScaleX);
-                int cropHeight = (int)(_selectionRect.Height * dpiScaleY);
-
-                cropX = Math.Max(0, Math.Min(_fullScreenshot.Width - 1, cropX));
-                cropY = Math.Max(0, Math.Min(_fullScreenshot.Height - 1, cropY));
-                cropWidth = Math.Max(1, Math.Min(_fullScreenshot.Width - cropX, cropWidth));
-                cropHeight = Math.Max(1, Math.Min(_fullScreenshot.Height - cropY, cropHeight));
-
-                using (Bitmap croppedBitmap = _fullScreenshot.Clone(new Rectangle(cropX, cropY, cropWidth, cropHeight), _fullScreenshot.PixelFormat))
-                {
+                    using Graphics graphics = Graphics.FromImage(croppedBitmap);
+                    graphics.CopyFromScreen(screenX, screenY, 0, 0, new System.Drawing.Size(cropWidth, cropHeight), CopyPixelOperation.SourceCopy);
+                    SaveLastSnip(croppedBitmap);
                     DecodedText = QrDecoder.Decode(croppedBitmap);
                 }
 
                 SnippedSuccessfully = true;
-                this.DialogResult = true;
                 Close();
             }
             catch (Exception ex)
@@ -224,14 +190,6 @@ namespace QR_deFuzzer
         {
             DecodedText = null;
             SnippedSuccessfully = false;
-            try
-            {
-                this.DialogResult = false;
-            }
-            catch
-            {
-                // In case window is not shown as dialog
-            }
             Close();
         }
 
@@ -240,6 +198,57 @@ namespace QR_deFuzzer
             if (e.Key == Key.Escape)
             {
                 CancelSnipping();
+            }
+        }
+
+        private void UpdateCrosshair(System.Windows.Point point)
+        {
+            const double arm = 14;
+
+            SetLine(CrosshairVerticalShadow, point.X, point.Y - arm, point.X, point.Y + arm);
+            SetLine(CrosshairVertical, point.X, point.Y - arm, point.X, point.Y + arm);
+            SetLine(CrosshairHorizontalShadow, point.X - arm, point.Y, point.X + arm, point.Y);
+            SetLine(CrosshairHorizontal, point.X - arm, point.Y, point.X + arm, point.Y);
+        }
+
+        private static void SetLine(System.Windows.Shapes.Line line, double x1, double y1, double x2, double y2)
+        {
+            line.X1 = x1;
+            line.Y1 = y1;
+            line.X2 = x2;
+            line.Y2 = y2;
+        }
+
+        private void HideCaptureChrome()
+        {
+            Opacity = 0;
+            OverlayPath.Visibility = Visibility.Collapsed;
+            CrosshairVerticalShadow.Visibility = Visibility.Collapsed;
+            CrosshairHorizontalShadow.Visibility = Visibility.Collapsed;
+            CrosshairVertical.Visibility = Visibility.Collapsed;
+            CrosshairHorizontal.Visibility = Visibility.Collapsed;
+            SelectionGlowBorder.Visibility = Visibility.Collapsed;
+            SelectionBorder.Visibility = Visibility.Collapsed;
+            InfoTooltip.Visibility = Visibility.Collapsed;
+
+            Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
+            Thread.Sleep(160);
+        }
+
+        private static void SaveLastSnip(Bitmap bitmap)
+        {
+            try
+            {
+                string? directory = Path.GetDirectoryName(AppLogger.LogPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                    bitmap.Save(Path.Combine(directory, "last-snip.png"), ImageFormat.Png);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("Failed to save last snip image.", ex);
             }
         }
     }

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
 namespace QR_deFuzzer
@@ -12,16 +13,23 @@ namespace QR_deFuzzer
         private System.Windows.Forms.NotifyIcon? _trayIcon;
         private System.Windows.Forms.ContextMenuStrip? _contextMenu;
         private bool _isSnippingOpen = false;
+        private bool _isShuttingDown = false;
 
         private const string SettingsKey = @"Software\QR-deFuzzer";
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            AppLogger.Info($"Starting QR-deFuzzer. ProcessPath={Environment.ProcessPath ?? "<null>"}");
+
+            DispatcherUnhandledException += Application_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
             // 1. Single-Instance Check
             const string mutexName = "QR-deFuzzer-SingleInstance-Mutex";
             _mutex = new Mutex(true, mutexName, out bool createdNew);
             if (!createdNew)
             {
+                AppLogger.Info("A second instance was started while another instance is already running.");
                 MessageBox.Show("QR-deFuzzer is already running in the system tray.", "Already Running", MessageBoxButton.OK, MessageBoxImage.Information);
                 Shutdown();
                 return;
@@ -33,18 +41,25 @@ namespace QR_deFuzzer
             // 2. Initialize WinForms subsystem (required before creating NotifyIcon)
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
-            System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
 
             // 3. Initialize Tray Icon
             InitializeTrayIcon();
+
+            _trayIcon?.ShowBalloonTip(
+                3500,
+                "QR-deFuzzer is running",
+                "Use the tray icon to snip and decode a QR code.",
+                System.Windows.Forms.ToolTipIcon.Info);
         }
 
         private void InitializeTrayIcon()
         {
             try
             {
+                AppLogger.Info("Initializing tray icon.");
+
                 _trayIcon = new System.Windows.Forms.NotifyIcon();
-                _trayIcon.Text = "QR-deFuzzer\nLeft-click to Snip & Decode QR";
+                _trayIcon.Text = "QR-deFuzzer - click to snip QR";
                 _trayIcon.Visible = true;
 
                 // Load icon - prefer extracting from the EXE's embedded Win32 icon resource
@@ -56,6 +71,7 @@ namespace QR_deFuzzer
                 if (!string.IsNullOrEmpty(exePath) && System.IO.File.Exists(exePath))
                 {
                     appIcon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                    AppLogger.Info(appIcon != null ? "Loaded tray icon from executable." : "Executable icon extraction returned null.");
                 }
 
                 // Method 2: Try WPF pack:// resource stream as fallback
@@ -70,6 +86,7 @@ namespace QR_deFuzzer
                             using (var stream = iconStreamInfo.Stream)
                             {
                                 appIcon = new System.Drawing.Icon(stream);
+                                AppLogger.Info("Loaded tray icon from WPF resource.");
                             }
                         }
                     }
@@ -128,11 +145,15 @@ namespace QR_deFuzzer
                         StartSnipping();
                     }
                 };
+
+                _trayIcon.DoubleClick += (s, ea) => StartSnipping();
+                AppLogger.Info("Tray icon initialized.");
             }
             catch (Exception ex)
             {
+                AppLogger.Error("Failed to initialize system tray icon.", ex);
                 string errorDetail = ex.ToString(); // Full exception with inner exceptions and stack trace
-                MessageBox.Show($"Failed to initialize system tray icon:\n\n{errorDetail}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Failed to initialize system tray icon:\n\n{errorDetail}\n\nLog file:\n{AppLogger.LogPath}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 ShutdownApp();
             }
         }
@@ -144,20 +165,23 @@ namespace QR_deFuzzer
             _isSnippingOpen = true;
             try
             {
-                var snipper = new SnippingOverlayWindow();
-                bool? result = snipper.ShowDialog();
+                AppLogger.Info("Opening snipping overlay.");
+                using var snipper = new WinFormsSnippingOverlay();
+                snipper.ShowDialog();
 
-                if (result == true && snipper.SnippedSuccessfully)
+                if (snipper.SnippedSuccessfully)
                 {
                     string? decodedText = snipper.DecodedText;
                     if (!string.IsNullOrEmpty(decodedText))
                     {
+                        AppLogger.Info("QR code decoded successfully.");
                         // Open result display window
                         var resultWindow = new ResultWindow(decodedText);
                         resultWindow.ShowDialog();
                     }
                     else
                     {
+                        AppLogger.Info("Snip completed but no QR code was detected.");
                         // Display notification that no QR code was found
                         if (_trayIcon != null)
                         {
@@ -168,7 +192,8 @@ namespace QR_deFuzzer
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Snipping overlay error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                AppLogger.Error("Snipping overlay error.", ex);
+                MessageBox.Show($"Snipping overlay error: {ex.Message}\n\nLog file:\n{AppLogger.LogPath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -220,6 +245,14 @@ namespace QR_deFuzzer
 
         private void ShutdownApp()
         {
+            if (_isShuttingDown)
+            {
+                return;
+            }
+
+            _isShuttingDown = true;
+            AppLogger.Info("Shutting down QR-deFuzzer.");
+
             // Clean up tray icon to prevent ghost tray icons in Windows
             if (_trayIcon != null)
             {
@@ -240,8 +273,35 @@ namespace QR_deFuzzer
 
         protected override void OnExit(ExitEventArgs e)
         {
-            ShutdownApp();
+            if (!_isShuttingDown)
+            {
+                ShutdownApp();
+            }
             base.OnExit(e);
+        }
+
+        private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            AppLogger.Error("Unhandled UI exception.", e.Exception);
+            MessageBox.Show($"QR-deFuzzer hit an unexpected error:\n\n{e.Exception.Message}\n\nLog file:\n{AppLogger.LogPath}", "QR-deFuzzer Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            e.Handled = true;
+
+            if (_trayIcon == null)
+            {
+                ShutdownApp();
+            }
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                AppLogger.Error("Unhandled application exception.", ex);
+            }
+            else
+            {
+                AppLogger.Info($"Unhandled application exception: {e.ExceptionObject}");
+            }
         }
     }
 }
