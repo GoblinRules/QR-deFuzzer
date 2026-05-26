@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.7 - 2026-05-26
+
+- Restyled the tray right-click menu to match the QR-deFuzzer dark UI.
+- Added dark menu backgrounds, borders, hover states, separators, and submenu arrows.
+
 ## v1.1.6 - 2026-05-26
 
 - Moved startup, auto-copy, and about controls fully into Settings.

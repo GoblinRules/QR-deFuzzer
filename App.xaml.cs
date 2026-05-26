@@ -100,6 +100,11 @@ namespace QR_deFuzzer
 
                 // Context Menu
                 _contextMenu = new System.Windows.Forms.ContextMenuStrip();
+                _contextMenu.Renderer = new DarkTrayMenuRenderer();
+                _contextMenu.BackColor = System.Drawing.Color.FromArgb(18, 18, 22);
+                _contextMenu.ForeColor = System.Drawing.Color.FromArgb(238, 238, 246);
+                _contextMenu.ShowImageMargin = false;
+                _contextMenu.Padding = new System.Windows.Forms.Padding(5);
 
                 var scanItem = new System.Windows.Forms.ToolStripMenuItem("Scan Screens for QR");
                 scanItem.Click += (s, ea) => ScanScreensForQr();
@@ -119,6 +124,8 @@ namespace QR_deFuzzer
                 var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
                 exitItem.Click += (s, ea) => ShutdownApp();
                 _contextMenu.Items.Add(exitItem);
+
+                StyleTrayMenuItems(_contextMenu.Items);
 
                 _trayIcon.ContextMenuStrip = _contextMenu;
 
@@ -177,6 +184,31 @@ namespace QR_deFuzzer
             finally
             {
                 _isSnippingOpen = false;
+            }
+        }
+
+        private static void StyleTrayMenuItems(System.Windows.Forms.ToolStripItemCollection items)
+        {
+            foreach (System.Windows.Forms.ToolStripItem item in items)
+            {
+                item.BackColor = System.Drawing.Color.FromArgb(18, 18, 22);
+                item.ForeColor = System.Drawing.Color.FromArgb(238, 238, 246);
+                item.Font = new System.Drawing.Font("Segoe UI", 9f, item.Font.Style);
+                item.Margin = new System.Windows.Forms.Padding(0, 1, 0, 1);
+                item.Padding = new System.Windows.Forms.Padding(8, 4, 8, 4);
+
+                if (item is System.Windows.Forms.ToolStripMenuItem menuItem && menuItem.DropDownItems.Count > 0)
+                {
+                    menuItem.DropDown.BackColor = System.Drawing.Color.FromArgb(18, 18, 22);
+                    menuItem.DropDown.ForeColor = System.Drawing.Color.FromArgb(238, 238, 246);
+                    menuItem.DropDown.Padding = new System.Windows.Forms.Padding(5);
+                    if (menuItem.DropDown is System.Windows.Forms.ToolStripDropDownMenu dropDownMenu)
+                    {
+                        dropDownMenu.ShowImageMargin = false;
+                    }
+                    menuItem.DropDown.Renderer = new DarkTrayMenuRenderer();
+                    StyleTrayMenuItems(menuItem.DropDownItems);
+                }
             }
         }
 
