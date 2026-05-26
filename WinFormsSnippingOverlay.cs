@@ -35,14 +35,23 @@ namespace QR_deFuzzer
         public WinFormsSnippingOverlay()
         {
             System.Windows.Forms.Screen[] screens = System.Windows.Forms.Screen.AllScreens;
-            _virtualScreen = screens
+            System.Windows.Forms.Screen[] distinctScreens = screens
+                .GroupBy(screen => screen.Bounds)
+                .Select(group => group.First())
+                .ToArray();
+
+            _virtualScreen = distinctScreens
                 .Select(screen => screen.Bounds)
                 .Aggregate(DrawingRectangle.Union);
 
-            AppLogger.Info($"Detected {screens.Length} monitor(s). Virtual bounds: {_virtualScreen.Left},{_virtualScreen.Top} {_virtualScreen.Width}x{_virtualScreen.Height}");
+            AppLogger.Info($"Detected {screens.Length} monitor(s), using {distinctScreens.Length} distinct bound set(s). Virtual bounds: {_virtualScreen.Left},{_virtualScreen.Top} {_virtualScreen.Width}x{_virtualScreen.Height}");
             foreach (System.Windows.Forms.Screen screen in screens)
             {
                 AppLogger.Info($"Monitor: Device={screen.DeviceName}, Primary={screen.Primary}, Bounds={screen.Bounds}, WorkingArea={screen.WorkingArea}");
+            }
+
+            foreach (System.Windows.Forms.Screen screen in distinctScreens)
+            {
                 _forms.Add(new MonitorOverlayForm(this, screen));
             }
         }
@@ -137,14 +146,18 @@ namespace QR_deFuzzer
                 System.Windows.Forms.Application.DoEvents();
                 Thread.Sleep(140);
 
-                using var croppedBitmap = new DrawingBitmap(captureRect.Width, captureRect.Height, PixelFormat.Format32bppArgb);
-                using (DrawingGraphics graphics = DrawingGraphics.FromImage(croppedBitmap))
-                {
-                    graphics.CopyFromScreen(captureRect.Left, captureRect.Top, 0, 0, captureRect.Size, CopyPixelOperation.SourceCopy);
-                }
-
+                using var croppedBitmap = CaptureBitmap(captureRect);
                 SaveLastSnip(croppedBitmap);
                 DecodedText = QrDecoder.Decode(croppedBitmap);
+
+                if (string.IsNullOrEmpty(DecodedText) && TryGetContainingMonitor(selection, out DrawingRectangle monitorBounds))
+                {
+                    AppLogger.Info($"Selected crop did not decode. Retrying full containing monitor: {monitorBounds.X},{monitorBounds.Y} {monitorBounds.Width}x{monitorBounds.Height}.");
+                    using var monitorBitmap = CaptureBitmap(monitorBounds);
+                    SaveDebugSnip(monitorBitmap, "last-monitor-snip.png");
+                    DecodedText = QrDecoder.Decode(monitorBitmap);
+                }
+
                 SnippedSuccessfully = true;
                 Finish(System.Windows.Forms.DialogResult.OK);
             }
@@ -166,6 +179,30 @@ namespace QR_deFuzzer
                 selection.Height + padding * 2);
         }
 
+        private static DrawingBitmap CaptureBitmap(DrawingRectangle captureRect)
+        {
+            var bitmap = new DrawingBitmap(captureRect.Width, captureRect.Height, PixelFormat.Format32bppArgb);
+            using DrawingGraphics graphics = DrawingGraphics.FromImage(bitmap);
+            graphics.CopyFromScreen(captureRect.Left, captureRect.Top, 0, 0, captureRect.Size, CopyPixelOperation.SourceCopy);
+            return bitmap;
+        }
+
+        private bool TryGetContainingMonitor(DrawingRectangle selection, out DrawingRectangle monitorBounds)
+        {
+            var center = new DrawingPoint(selection.Left + selection.Width / 2, selection.Top + selection.Height / 2);
+            foreach (MonitorOverlayForm form in _forms)
+            {
+                if (form.Screen.Bounds.Contains(center))
+                {
+                    monitorBounds = form.Screen.Bounds;
+                    return true;
+                }
+            }
+
+            monitorBounds = DrawingRectangle.Empty;
+            return false;
+        }
+
         private static void SaveLastSnip(DrawingBitmap bitmap)
         {
             try
@@ -180,6 +217,23 @@ namespace QR_deFuzzer
             catch (Exception ex)
             {
                 AppLogger.Error("Failed to save last snip image.", ex);
+            }
+        }
+
+        private static void SaveDebugSnip(DrawingBitmap bitmap, string fileName)
+        {
+            try
+            {
+                string? directory = Path.GetDirectoryName(AppLogger.LogPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                    bitmap.Save(Path.Combine(directory, fileName), ImageFormat.Png);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error($"Failed to save debug snip image {fileName}.", ex);
             }
         }
 
@@ -259,8 +313,8 @@ namespace QR_deFuzzer
                 KeyPreview = true;
                 DoubleBuffered = true;
                 Cursor = System.Windows.Forms.Cursors.Cross;
-                BackColor = DrawingColor.Black;
-                Opacity = 0.32;
+                BackColor = DrawingColor.Magenta;
+                TransparencyKey = DrawingColor.Magenta;
             }
 
             protected override void OnShown(EventArgs e)
@@ -274,6 +328,11 @@ namespace QR_deFuzzer
             {
                 base.OnPaint(e);
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+
+                using (var dimBrush = new DrawingSolidBrush(DrawingColor.FromArgb(88, DrawingColor.Black)))
+                {
+                    e.Graphics.FillRectangle(dimBrush, ClientRectangle);
+                }
 
                 DrawReticle(e.Graphics, PointToClient(System.Windows.Forms.Cursor.Position));
 
