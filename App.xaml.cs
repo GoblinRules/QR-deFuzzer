@@ -30,7 +30,12 @@ namespace QR_deFuzzer
             // Keep application running in background when no windows are open
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            // 2. Initialize Tray Icon
+            // 2. Initialize WinForms subsystem (required before creating NotifyIcon)
+            System.Windows.Forms.Application.EnableVisualStyles();
+            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+            System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
+
+            // 3. Initialize Tray Icon
             InitializeTrayIcon();
         }
 
