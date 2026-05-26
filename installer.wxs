@@ -51,6 +51,14 @@
             <RegistryValue Name="EstimatedSize" Type="integer" Value="183000" KeyPath="yes" />
           </RegistryKey>
         </Component>
+        <Component Id="StartupRegistration" Guid="A9B8C7D6-E5F4-4321-ABCD-567890123456" Condition="STARTUP=1">
+          <RegistryValue Root="HKCU"
+                         Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                         Name="QR-deFuzzer"
+                         Type="string"
+                         Value="&quot;[INSTALLFOLDER]QR-deFuzzer.exe&quot;"
+                         KeyPath="yes" />
+        </Component>
       </Directory>
     </StandardDirectory>
 
@@ -91,6 +99,7 @@
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="AppPathsRegistration" />
       <ComponentRef Id="InstalledAppsRegistration" />
+      <ComponentRef Id="StartupRegistration" />
       <ComponentRef Id="DesktopShortcut" />
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>
