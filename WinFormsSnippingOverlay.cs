@@ -60,7 +60,7 @@ namespace QR_deFuzzer
             {
                 if (!ReferenceEquals(form, _primaryForm))
                 {
-                    form.Show(_primaryForm);
+                    form.Show();
                 }
             }
 
