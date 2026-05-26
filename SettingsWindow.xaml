@@ -5,9 +5,151 @@
         Width="620"
         Height="560"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanMinimize"
-        Background="#121216">
-    <Border Background="#121216" BorderBrush="#252530" BorderThickness="1" Padding="18">
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#15FFFFFF"/>
+            <Setter Property="Foreground" Value="#E8E8F0"/>
+            <Setter Property="BorderBrush" Value="#44A090FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#22A090FF"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#407000FF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#FF7000FF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#1C1C24"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#333344"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="CaretBrush" Value="#A090FF"/>
+            <Setter Property="SelectionBrush" Value="#7F7000FF"/>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#E8E8F0"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="box"
+                                    Width="16"
+                                    Height="16"
+                                    Background="#1C1C24"
+                                    BorderBrush="#44A090FF"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    Margin="0,0,8,0">
+                                <TextBlock x:Name="tick"
+                                           Text="✓"
+                                           Foreground="#00E5FF"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="box" Property="Background" Value="#257000FF"/>
+                                <Setter TargetName="tick" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="box" Property="BorderBrush" Value="#A090FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#A8A8B8"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Grid>
+                            <Border x:Name="tabBorder"
+                                    Background="#101016"
+                                    BorderBrush="#2C2C38"
+                                    BorderThickness="1,1,1,0"
+                                    CornerRadius="6,6,0,0"
+                                    Padding="{TemplateBinding Padding}"
+                                    Margin="0,0,4,0">
+                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="tabBorder" Property="Background" Value="#1C1C24"/>
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#44A090FF"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="tabBorder" Property="Background" Value="#181820"/>
+                                <Setter Property="Foreground" Value="#D8D0FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="#121216" BorderBrush="#252530" BorderThickness="1.5" CornerRadius="12" Padding="18">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="4" Opacity="0.6"/>
+        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -19,126 +161,136 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Image Width="28" Height="28" Source="assets/icon.png" Margin="0,0,10,0"/>
+                <Image Width="30" Height="30" Source="assets/icon.png" Margin="0,0,10,0"/>
                 <StackPanel Grid.Column="1">
                     <TextBlock Text="QR-deFuzzer Settings" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
                     <TextBlock Name="VersionTextBlock" Foreground="#99FFFFFF" FontSize="12"/>
                 </StackPanel>
+                <Button Grid.Column="2"
+                        Content="X"
+                        Width="28"
+                        Height="28"
+                        Padding="0"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        Foreground="#88FFFFFF"
+                        Click="CloseButton_Click"/>
             </Grid>
 
-            <TabControl Grid.Row="1" Background="Transparent" BorderBrush="#333344" Foreground="White">
+            <TabControl Grid.Row="1">
                 <TabItem Header="General">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="12">
-                            <CheckBox Name="RunOnStartupCheckBox"
-                                      Content="Run QR-deFuzzer when Windows starts"
-                                      Foreground="White"
-                                      Margin="0,0,0,12"
-                                      Checked="RunOnStartupCheckBox_Changed"
-                                      Unchecked="RunOnStartupCheckBox_Changed"/>
+                    <Border Background="#1C1C24" BorderBrush="#2C2C38" BorderThickness="1" CornerRadius="0,8,8,8" Padding="14">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <CheckBox Name="RunOnStartupCheckBox"
+                                          Content="Run QR-deFuzzer when Windows starts"
+                                          Margin="0,0,0,12"
+                                          Checked="RunOnStartupCheckBox_Changed"
+                                          Unchecked="RunOnStartupCheckBox_Changed"/>
 
-                            <CheckBox Name="AutoCopyCheckBox"
-                                      Content="Auto-copy decoded QR text to clipboard"
-                                      Foreground="White"
-                                      Margin="0,0,0,18"
-                                      Checked="AutoCopyCheckBox_Changed"
-                                      Unchecked="AutoCopyCheckBox_Changed"/>
+                                <CheckBox Name="AutoCopyCheckBox"
+                                          Content="Auto-copy decoded QR text to clipboard"
+                                          Margin="0,0,0,18"
+                                          Checked="AutoCopyCheckBox_Changed"
+                                          Unchecked="AutoCopyCheckBox_Changed"/>
 
-                            <TextBlock Text="Debug screenshots" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <TextBlock Text="Screenshots are only saved when debugging is enabled. Normal scans do not need cached images."
-                                       Foreground="#99FFFFFF"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,10"/>
+                                <TextBlock Text="Debug screenshots" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Text="Screenshots are only saved when debugging is enabled. Normal scans do not need cached images."
+                                           Foreground="#99FFFFFF"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,10"/>
 
-                            <CheckBox Name="SaveScreenshotsCheckBox"
-                                      Content="Save screenshots for debugging"
-                                      Foreground="White"
-                                      Margin="0,0,0,10"
-                                      Checked="SaveScreenshotsCheckBox_Changed"
-                                      Unchecked="SaveScreenshotsCheckBox_Changed"/>
+                                <CheckBox Name="SaveScreenshotsCheckBox"
+                                          Content="Save screenshots for debugging"
+                                          Margin="0,0,0,10"
+                                          Checked="SaveScreenshotsCheckBox_Changed"
+                                          Unchecked="SaveScreenshotsCheckBox_Changed"/>
 
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="90"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <CheckBox Name="AutoDeleteCheckBox"
-                                          Content="Auto-delete after"
-                                          Foreground="White"
-                                          VerticalAlignment="Center"
-                                          Checked="AutoDeleteCheckBox_Changed"
-                                          Unchecked="AutoDeleteCheckBox_Changed"/>
-                                <TextBox Grid.Column="1"
-                                         Name="AutoDeleteMinutesTextBox"
-                                         Margin="8,0"
-                                         Height="26"
-                                         TextChanged="AutoDeleteMinutesTextBox_TextChanged"/>
-                                <TextBlock Grid.Column="2" Text="minutes (0 disables auto-delete)" Foreground="#99FFFFFF" VerticalAlignment="Center"/>
-                            </Grid>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Name="AutoDeleteCheckBox"
+                                              Content="Auto-delete after"
+                                              VerticalAlignment="Center"
+                                              Checked="AutoDeleteCheckBox_Changed"
+                                              Unchecked="AutoDeleteCheckBox_Changed"/>
+                                    <TextBox Grid.Column="1"
+                                             Name="AutoDeleteMinutesTextBox"
+                                             Margin="8,0"
+                                             Height="28"
+                                             TextChanged="AutoDeleteMinutesTextBox_TextChanged"/>
+                                    <TextBlock Grid.Column="2" Text="minutes (0 disables auto-delete)" Foreground="#99FFFFFF" VerticalAlignment="Center"/>
+                                </Grid>
 
-                            <TextBlock Text="Cache folder" Foreground="White" FontWeight="SemiBold" Margin="0,8,0,6"/>
-                            <TextBox Name="CacheFolderTextBox"
-                                     IsReadOnly="True"
-                                     Background="#1C1C24"
-                                     Foreground="#DDFFFFFF"
-                                     BorderBrush="#333344"
-                                     Margin="0,0,0,8"/>
+                                <TextBlock Text="Cache folder" Foreground="White" FontWeight="SemiBold" Margin="0,6,0,6"/>
+                                <TextBox Name="CacheFolderTextBox" IsReadOnly="True" Margin="0,0,0,10"/>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                <Button Content="Open Cache Folder" Click="OpenCacheFolder_Click" Padding="12,6" Margin="0,0,8,0"/>
-                                <Button Content="Clear Cache Folder" Click="ClearCacheButton_Click" Padding="12,6"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Button Content="Open Cache Folder" Click="OpenCacheFolder_Click" Margin="0,0,8,0"/>
+                                    <Button Content="Clear Cache Folder" Click="ClearCacheButton_Click"/>
+                                </StackPanel>
+
+                                <TextBlock Name="CacheStatusTextBlock" Foreground="#99FFFFFF" FontSize="12"/>
                             </StackPanel>
-
-                            <TextBlock Name="CacheStatusTextBlock" Foreground="#99FFFFFF" FontSize="12"/>
-                        </StackPanel>
-                    </ScrollViewer>
+                        </ScrollViewer>
+                    </Border>
                 </TabItem>
 
                 <TabItem Header="Updates">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Update checks use the latest GitHub release for this project."
-                                   Foreground="#CCFFFFFF"
-                                   TextWrapping="Wrap"
-                                   Margin="0,0,0,12"/>
-                        <TextBlock Name="UpdateStatusTextBlock"
-                                   Text="No update check has been run yet."
-                                   Foreground="#99FFFFFF"
-                                   TextWrapping="Wrap"
-                                   Margin="0,0,0,12"/>
-                        <StackPanel Orientation="Horizontal">
-                            <Button Name="CheckUpdateButton" Content="Check for Update" Click="CheckUpdateButton_Click" Padding="12,6" Margin="0,0,8,0"/>
-                            <Button Name="DownloadInstallButton" Content="Download and Install Update" Click="DownloadInstallButton_Click" Padding="12,6" IsEnabled="False"/>
+                    <Border Background="#1C1C24" BorderBrush="#2C2C38" BorderThickness="1" CornerRadius="0,8,8,8" Padding="14">
+                        <StackPanel>
+                            <TextBlock Text="Update checks use the latest GitHub release for this project."
+                                       Foreground="#CCFFFFFF"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12"/>
+                            <TextBlock Name="UpdateStatusTextBlock"
+                                       Text="No update check has been run yet."
+                                       Foreground="#99FFFFFF"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,14"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Name="CheckUpdateButton" Content="Check for Update" Click="CheckUpdateButton_Click" Margin="0,0,8,0" Style="{StaticResource AccentButton}"/>
+                                <Button Name="DownloadInstallButton" Content="Download and Install Update" Click="DownloadInstallButton_Click" IsEnabled="False"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
                 </TabItem>
 
                 <TabItem Header="Help / About">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="12">
-                            <TextBlock Text="QR-deFuzzer" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Text="A Windows tray utility for scanning visible screens or manual snips for QR codes."
-                                       Foreground="#CCFFFFFF"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,14"/>
+                    <Border Background="#1C1C24" BorderBrush="#2C2C38" BorderThickness="1" CornerRadius="0,8,8,8" Padding="14">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="QR-deFuzzer" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Text="A Windows tray utility for scanning visible screens or manual snips for QR codes."
+                                           Foreground="#CCFFFFFF"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,14"/>
 
-                            <TextBlock Text="Quick help" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <TextBlock Foreground="#CCFFFFFF" TextWrapping="Wrap" Margin="0,0,0,14"><Run Text="Left-click the tray icon to scan visible screens. Right-click the tray icon for manual snip, settings, startup, auto-copy, and exit options."/></TextBlock>
+                                <TextBlock Text="Quick help" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Text="Left-click the tray icon to scan visible screens. Right-click the tray icon for manual snip, settings, and exit."
+                                           Foreground="#CCFFFFFF"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,14"/>
 
-                            <TextBlock Text="Manual snip" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <TextBlock Text="Choose a monitor from the tray menu, drag around the QR code, and release. Press Esc or right-click to cancel."
-                                       Foreground="#CCFFFFFF"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,14"/>
+                                <TextBlock Text="Manual snip" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Text="Choose a monitor from the tray menu, drag around the QR code, and release. Press Esc or right-click to cancel."
+                                           Foreground="#CCFFFFFF"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,14"/>
 
-                            <TextBlock Text="Files" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <TextBlock Name="PathsTextBlock" Foreground="#CCFFFFFF" TextWrapping="Wrap" Margin="0,0,0,14"/>
+                                <TextBlock Text="Files" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Name="PathsTextBlock" Foreground="#CCFFFFFF" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
-                            <TextBlock Text="Publisher: Ghost Kernel" Foreground="#CCFFFFFF" Margin="0,0,0,4"/>
-                            <TextBlock Text="Website: https://ghostkernel.cc" Foreground="#CCFFFFFF"/>
-                        </StackPanel>
-                    </ScrollViewer>
+                                <TextBlock Text="Publisher: Ghost Kernel" Foreground="#CCFFFFFF" Margin="0,0,0,4"/>
+                                <TextBlock Text="Website: https://ghostkernel.cc" Foreground="#CCFFFFFF"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
                 </TabItem>
             </TabControl>
 

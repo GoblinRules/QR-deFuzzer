@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.6 - 2026-05-26
+
+- Moved startup, auto-copy, and about controls fully into Settings.
+- Simplified the tray menu to scan, manual snip, settings, and exit actions.
+- Restyled Settings tabs, buttons, fields, and window chrome to match the QR-deFuzzer dark UI.
+
 ## v1.1.5 - 2026-05-26
 
 - Added a tray Settings window.

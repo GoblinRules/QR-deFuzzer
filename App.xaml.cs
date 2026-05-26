@@ -116,32 +116,6 @@ namespace QR_deFuzzer
 
                 _contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
-                // Run on Startup
-                var startupItem = new System.Windows.Forms.ToolStripMenuItem("Run on Startup");
-                startupItem.Checked = StartupHelper.IsRunOnStartupEnabled();
-                startupItem.Click += (s, ea) => {
-                    bool newState = !startupItem.Checked;
-                    StartupHelper.SetRunOnStartup(newState);
-                    startupItem.Checked = StartupHelper.IsRunOnStartupEnabled();
-                };
-                _contextMenu.Items.Add(startupItem);
-
-                // Auto-copy to Clipboard
-                var autoCopyItem = new System.Windows.Forms.ToolStripMenuItem("Auto-copy to Clipboard");
-                autoCopyItem.Checked = AppSettings.GetAutoCopy();
-                autoCopyItem.Click += (s, ea) => {
-                    bool newState = !autoCopyItem.Checked;
-                    AppSettings.SetAutoCopy(newState);
-                    autoCopyItem.Checked = AppSettings.GetAutoCopy();
-                };
-                _contextMenu.Items.Add(autoCopyItem);
-
-                _contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-
-                var aboutItem = new System.Windows.Forms.ToolStripMenuItem("About QR-deFuzzer");
-                aboutItem.Click += (s, ea) => ShowAbout();
-                _contextMenu.Items.Add(aboutItem);
-
                 var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
                 exitItem.Click += (s, ea) => ShutdownApp();
                 _contextMenu.Items.Add(exitItem);

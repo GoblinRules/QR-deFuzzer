@@ -52,9 +52,6 @@ Press `Esc` or right-click during manual snip mode to cancel.
 - `Scan Screens for QR` scans connected monitors automatically.
 - `Manual Snip` opens a monitor selector for manual capture.
 - `Settings...` opens update, help/about, startup, auto-copy, and cache controls.
-- `Run on Startup` toggles per-user startup registration.
-- `Auto-copy to Clipboard` copies decoded QR text automatically after a successful scan.
-- `About QR-deFuzzer` shows app information.
 - `Exit` closes the tray app.
 
 ## MSI Deployment
