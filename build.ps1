@@ -36,6 +36,8 @@ if (-not $SkipPortable) {
         --self-contained true `
         /p:PublishSingleFile=true `
         /p:IncludeNativeLibrariesForSelfExtract=true `
+        /p:DebugType=None `
+        /p:DebugSymbols=false `
         -o $portableDir
     
     if ($LASTEXITCODE -ne 0) {
@@ -64,7 +66,7 @@ if (-not $SkipInstaller) {
     # Build the portable EXE first if it hasn't been built
     if (-not (Test-Path (Join-Path $publishDir "QR-deFuzzer.exe"))) {
         Write-Host "  -> Portable EXE not found, building first..." -ForegroundColor Yellow
-        dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o $publishDir
+        dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:DebugSymbols=false -o $publishDir
     }
     
     $msiOutput = Join-Path $DistDir "QR-deFuzzer-Setup.msi"
