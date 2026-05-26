@@ -42,21 +42,37 @@ namespace QR_deFuzzer
                 _trayIcon.Text = "QR-deFuzzer\nLeft-click to Snip & Decode QR";
                 _trayIcon.Visible = true;
 
-                // Load embedded icon
-                var iconUri = new Uri("pack://application:,,,/assets/icon.ico");
-                var iconStreamInfo = GetResourceStream(iconUri);
-                if (iconStreamInfo != null)
+                // Load icon - prefer extracting from the EXE's embedded Win32 icon resource
+                // (works reliably in single-file publish mode)
+                System.Drawing.Icon? appIcon = null;
+                
+                // Method 1: Extract from the running EXE (uses ApplicationIcon from .csproj)
+                string? exePath = Environment.ProcessPath;
+                if (!string.IsNullOrEmpty(exePath) && System.IO.File.Exists(exePath))
                 {
-                    using (var stream = iconStreamInfo.Stream)
+                    appIcon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                }
+
+                // Method 2: Try WPF pack:// resource stream as fallback
+                if (appIcon == null)
+                {
+                    try
                     {
-                        _trayIcon.Icon = new System.Drawing.Icon(stream);
+                        var iconUri = new Uri("pack://application:,,,/assets/icon.ico");
+                        var iconStreamInfo = GetResourceStream(iconUri);
+                        if (iconStreamInfo != null)
+                        {
+                            using (var stream = iconStreamInfo.Stream)
+                            {
+                                appIcon = new System.Drawing.Icon(stream);
+                            }
+                        }
                     }
+                    catch { /* pack URI not available in this context */ }
                 }
-                else
-                {
-                    // Fallback to default system icon if something is wrong
-                    _trayIcon.Icon = System.Drawing.SystemIcons.Application;
-                }
+
+                // Method 3: Final fallback to system icon
+                _trayIcon.Icon = appIcon ?? System.Drawing.SystemIcons.Application;
 
                 // Context Menu
                 _contextMenu = new System.Windows.Forms.ContextMenuStrip();
@@ -110,7 +126,8 @@ namespace QR_deFuzzer
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to initialize system tray icon: {ex.Message}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string errorDetail = ex.ToString(); // Full exception with inner exceptions and stack trace
+                MessageBox.Show($"Failed to initialize system tray icon:\n\n{errorDetail}", "Critical Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 ShutdownApp();
             }
         }
