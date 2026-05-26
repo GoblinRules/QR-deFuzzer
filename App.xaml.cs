@@ -107,9 +107,7 @@ namespace QR_deFuzzer
                 scanItem.Font = new System.Drawing.Font(scanItem.Font, System.Drawing.FontStyle.Bold);
                 _contextMenu.Items.Add(scanItem);
 
-                var manualSnipItem = new System.Windows.Forms.ToolStripMenuItem("Manual Snip Current Monitor");
-                manualSnipItem.Click += (s, ea) => ManualSnipCurrentMonitor();
-                _contextMenu.Items.Add(manualSnipItem);
+                _contextMenu.Items.Add(CreateManualSnipMenu());
 
                 _contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
@@ -203,15 +201,40 @@ namespace QR_deFuzzer
             }
         }
 
-        private void ManualSnipCurrentMonitor()
+        private System.Windows.Forms.ToolStripMenuItem CreateManualSnipMenu()
+        {
+            var manualSnipMenu = new System.Windows.Forms.ToolStripMenuItem("Manual Snip");
+
+            var cursorMonitorItem = new System.Windows.Forms.ToolStripMenuItem("Monitor Under Cursor");
+            cursorMonitorItem.Click += (s, ea) => ManualSnipMonitor(System.Windows.Forms.Screen.FromPoint(System.Windows.Forms.Cursor.Position));
+            manualSnipMenu.DropDownItems.Add(cursorMonitorItem);
+            manualSnipMenu.DropDownItems.Add(new System.Windows.Forms.ToolStripSeparator());
+
+            System.Windows.Forms.Screen[] screens = System.Windows.Forms.Screen.AllScreens;
+            for (int index = 0; index < screens.Length; index++)
+            {
+                System.Windows.Forms.Screen screen = screens[index];
+                string label = $"Monitor {index + 1}{(screen.Primary ? " (Primary)" : "")} - {screen.Bounds.Width}x{screen.Bounds.Height} @ {screen.Bounds.X},{screen.Bounds.Y}";
+                var screenItem = new System.Windows.Forms.ToolStripMenuItem(label) { Tag = screen };
+                screenItem.Click += (s, ea) => {
+                    if (s is System.Windows.Forms.ToolStripMenuItem item && item.Tag is System.Windows.Forms.Screen selectedScreen)
+                    {
+                        ManualSnipMonitor(selectedScreen);
+                    }
+                };
+                manualSnipMenu.DropDownItems.Add(screenItem);
+            }
+
+            return manualSnipMenu;
+        }
+
+        private void ManualSnipMonitor(System.Windows.Forms.Screen screen)
         {
             if (_isSnippingOpen) return;
 
             _isSnippingOpen = true;
             try
             {
-                var cursorPosition = System.Windows.Forms.Cursor.Position;
-                var screen = System.Windows.Forms.Screen.FromPoint(cursorPosition);
                 AppLogger.Info($"Opening manual snip on monitor {screen.DeviceName}, Bounds={screen.Bounds}.");
 
                 using var snipper = new ManualSnipOverlay(screen);
