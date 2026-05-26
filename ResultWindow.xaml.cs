@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
@@ -79,6 +80,7 @@ namespace QR_deFuzzer
                 IssuerTextBlock.Text = info.Issuer;
                 AccountTextBlock.Text = info.Account;
                 _rawSecret = info.Secret;
+                ExtraInfoTextBox.Text = BuildOtpDetails(info);
                 UpdateSecretDisplay();
             }
             else
@@ -144,13 +146,50 @@ namespace QR_deFuzzer
             if (_isSecretRevealed)
             {
                 SecretTextBox.Text = _rawSecret;
-                RevealEyeText.Text = "🙈";
+                RevealEyeText.Text = "Hide";
             }
             else
             {
-                SecretTextBox.Text = new string('•', Math.Min(16, Math.Max(8, _rawSecret.Length)));
-                RevealEyeText.Text = "👁️";
+                SecretTextBox.Text = new string('*', Math.Min(16, Math.Max(8, _rawSecret.Length)));
+                RevealEyeText.Text = "Show";
             }
+        }
+
+        private static string BuildOtpDetails(OtpAuthInfo info)
+        {
+            var details = new StringBuilder();
+            details.AppendLine($"Type: {info.Type.ToUpperInvariant()}");
+            details.AppendLine($"Label: {info.Label}");
+            details.AppendLine($"Issuer: {info.Issuer}");
+            details.AppendLine($"Account: {info.Account}");
+            details.AppendLine($"Algorithm: {info.Algorithm}");
+            details.AppendLine($"Digits: {info.Digits}");
+
+            if (info.Type.Equals("hotp", StringComparison.OrdinalIgnoreCase))
+            {
+                details.AppendLine($"Counter: {info.Counter}");
+            }
+            else
+            {
+                details.AppendLine($"Period: {info.Period} seconds");
+            }
+
+            details.AppendLine();
+            details.AppendLine("Additional QR parameters:");
+
+            if (info.ExtraParameters.Count == 0)
+            {
+                details.AppendLine("None found.");
+            }
+            else
+            {
+                foreach (var parameter in info.ExtraParameters)
+                {
+                    details.AppendLine($"{parameter.Key}: {parameter.Value}");
+                }
+            }
+
+            return details.ToString().TrimEnd();
         }
 
         private async void ShowToast(string message)
@@ -244,6 +283,12 @@ namespace QR_deFuzzer
         {
             Clipboard.SetText(_decodedText);
             ShowToast("Copied Full URI!");
+        }
+
+        private void CopyDetails_Click(object sender, RoutedEventArgs e)
+        {
+            Clipboard.SetText(ExtraInfoTextBox.Text);
+            ShowToast("Copied Details!");
         }
 
         private void ToggleReveal_Click(object sender, RoutedEventArgs e)

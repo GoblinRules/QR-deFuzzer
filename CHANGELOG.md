@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.4 - 2026-05-26
+
+- Added a 2FA Details tab for OTP QR metadata and additional query parameters.
+
 ## v1.1.3 - 2026-05-26
 
 - Reworked scanning around multi-monitor setups.

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Web;
 
 namespace QR_deFuzzer
@@ -15,6 +16,7 @@ namespace QR_deFuzzer
         public int Period { get; set; } = 30;
         public long Counter { get; set; } = 0;
         public string RawUri { get; set; } = "";
+        public Dictionary<string, string> ExtraParameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
     public static class OtpAuthParser
@@ -67,12 +69,37 @@ namespace QR_deFuzzer
                 if (int.TryParse(queryParams["period"], out int period)) info.Period = period;
                 if (long.TryParse(queryParams["counter"], out long counter)) info.Counter = counter;
 
+                foreach (string? key in queryParams.AllKeys)
+                {
+                    if (string.IsNullOrWhiteSpace(key))
+                    {
+                        continue;
+                    }
+
+                    if (IsKnownParameter(key))
+                    {
+                        continue;
+                    }
+
+                    info.ExtraParameters[key] = queryParams[key] ?? "";
+                }
+
                 return !string.IsNullOrEmpty(info.Secret);
             }
             catch
             {
                 return false;
             }
+        }
+
+        private static bool IsKnownParameter(string key)
+        {
+            return key.Equals("secret", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("issuer", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("algorithm", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("digits", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("period", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("counter", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

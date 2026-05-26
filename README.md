@@ -15,6 +15,7 @@ The app can scan all connected monitors automatically, or you can right-click th
 - QR decoding through ZXing.Net.
 - `otpauth://` parsing for TOTP enrolment QR codes.
 - Secret, issuer, account, and raw text copy actions.
+- 2FA details tab for algorithm, digit count, period/counter, label, and any additional QR parameters.
 - URL detection with an open-in-browser action.
 - Optional auto-copy to clipboard.
 - Optional run-on-startup support.
@@ -40,6 +41,7 @@ Publisher metadata is set to `Ghost Kernel`, with product information pointing t
 3. For manual selection, choose `Manual Snip`, then pick the monitor you want.
 4. Drag around the QR code and release.
 5. Copy the decoded value, TOTP secret, issuer, account, or open a decoded URL.
+6. For 2FA QR codes, use the `Details` tab to inspect extra parameters included in the QR code.
 
 Press `Esc` or right-click during manual snip mode to cancel.
 
