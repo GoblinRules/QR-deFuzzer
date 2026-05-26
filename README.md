@@ -1,78 +1,139 @@
 # QR-deFuzzer
 
-A lightweight Windows system tray application that lets you snip any area of your screen to decode QR codes instantly. Built for speed and security — features native 2FA `otpauth://` parsing with secret key extraction, perfect for adding accounts to Proton Pass, Google Authenticator, and other TOTP apps.
+QR-deFuzzer is a lightweight Windows tray app for finding and decoding QR codes on screen. It is aimed at QR codes that appear in browsers, VPN portals, admin dashboards, password-manager setup flows, and 2FA enrolment pages.
+
+The app can scan all connected monitors automatically, or you can right-click the tray icon and manually snip a chosen monitor.
 
 ![QR-deFuzzer Icon](assets/icon.png)
 
 ## Features
 
-- **System Tray App** — Runs quietly in the background. Left-click the tray icon or right-click for options.
-- **Snipping Tool** — Drag to select any area of your screen containing a QR code.
-- **Instant Decode** — Decodes QR codes in milliseconds using ZXing.Net.
-- **2FA / OTPAuth Support** — Automatically parses `otpauth://totp/...` URIs and displays:
-  - Issuer (e.g., Proton, GitHub, Google)
-  - Account name
-  - Secret key (masked by default, with reveal toggle)
-  - Copy buttons for each field
-- **URL Detection** — Detects web URLs and offers an "Open in Browser" button.
-- **Auto-Copy to Clipboard** — Optionally auto-copies decoded text on capture.
-- **Run on Startup** — Toggle automatic startup from the tray menu.
-- **Single Instance** — Prevents duplicate instances via mutex.
-- **Multi-Monitor Support** — Captures across all connected displays.
+- System tray app with single-instance protection.
+- Automatic QR scan across connected monitors.
+- Multi-monitor handling for different monitor positions and resolutions.
+- Manual snip mode with a monitor selector.
+- QR decoding through ZXing.Net.
+- `otpauth://` parsing for TOTP enrolment QR codes.
+- Secret, issuer, account, and raw text copy actions.
+- URL detection with an open-in-browser action.
+- Optional auto-copy to clipboard.
+- Optional run-on-startup support.
+- Per-user MSI installer and portable EXE release.
 
-## Installation
+## Download
 
-### Portable (No Install Required)
-Download `QR-deFuzzer-Portable.exe` from the [Releases](../../releases) page and run it. No dependencies needed — the .NET runtime is embedded.
+Download the latest release from the [Releases](../../releases) page.
 
-### MSI Installer
-Download `QR-deFuzzer-Setup.msi` from the [Releases](../../releases) page. This installs to `%LocalAppData%\QR-deFuzzer` and creates desktop + start menu shortcuts.
+Release assets:
 
-## Building from Source
+- `QR-deFuzzer-Portable.exe` - portable self-contained EXE.
+- `QR-deFuzzer-Setup.msi` - per-user MSI installer.
 
-### Prerequisites
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [WiX Toolset v7](https://wixtoolset.org/) (for MSI installer only)
-
-### Quick Build
-```powershell
-# Build everything (portable + installer)
-.\build.ps1
-
-# Portable only
-.\build.ps1 -SkipInstaller
-
-# Installer only
-.\build.ps1 -SkipPortable
-```
-
-### Manual Build
-```powershell
-# Debug build
-dotnet build
-
-# Portable single-file EXE
-dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o dist\portable
-
-# MSI installer
-wix build -src installer.wxs -d "PublishDir=dist\portable" -d "ProjectDir=." -o dist\QR-deFuzzer-Setup.msi
-```
+Publisher metadata is set to `Ghost Kernel`, with product information pointing to `https://ghostkernel.cc`.
 
 ## Usage
 
-1. Launch QR-deFuzzer — it appears as an icon in your system tray.
-2. **Left-click** the tray icon (or select "Snip & Decode QR" from the right-click menu).
-3. **Drag** to select the area containing a QR code.
-4. The decoded result appears in a popup:
-   - **Plain text/URL**: Copy or open in browser.
-   - **2FA code**: View issuer, account, and secret key with individual copy buttons.
-5. Press **Escape** at any time to cancel.
+1. Launch QR-deFuzzer.
+2. Use the tray icon:
+   - Left-click: scan screens automatically for QR codes.
+   - Right-click: open the menu.
+3. For manual selection, choose `Manual Snip`, then pick the monitor you want.
+4. Drag around the QR code and release.
+5. Copy the decoded value, TOTP secret, issuer, account, or open a decoded URL.
+
+Press `Esc` or right-click during manual snip mode to cancel.
+
+## Tray Menu
+
+- `Scan Screens for QR` scans connected monitors automatically.
+- `Manual Snip` opens a monitor selector for manual capture.
+- `Run on Startup` toggles per-user startup registration.
+- `Auto-copy to Clipboard` copies decoded QR text automatically after a successful scan.
+- `About QR-deFuzzer` shows app information.
+- `Exit` closes the tray app.
+
+## MSI Deployment
+
+The MSI is a per-user install. It installs to:
+
+```text
+%LocalAppData%\QR-deFuzzer
+```
+
+Silent install:
+
+```powershell
+msiexec /i QR-deFuzzer-Setup.msi /qn /norestart
+```
+
+Silent install with Windows startup enabled:
+
+```powershell
+msiexec /i QR-deFuzzer-Setup.msi /qn /norestart STARTUP=1
+```
+
+Silent uninstall:
+
+```powershell
+msiexec /x QR-deFuzzer-Setup.msi /qn /norestart
+```
+
+For Action1 or another RMM, run the installer in the logged-on user context when using `STARTUP=1`. The startup entry is written to `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, so a SYSTEM install writes startup for the SYSTEM profile rather than the interactive user.
+
+## Logs
+
+Logs are written to:
+
+```text
+%LocalAppData%\QR-deFuzzer\QR-deFuzzer.log
+```
+
+This is the first place to check if the tray icon does not appear, a monitor is not captured correctly, or QR decoding fails.
+
+## Building
+
+Prerequisites:
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [WiX Toolset](https://wixtoolset.org/) for MSI builds
+
+Install WiX as a global .NET tool if needed:
+
+```powershell
+dotnet tool install --global wix
+```
+
+Build everything:
+
+```powershell
+.\build.ps1
+```
+
+Build portable only:
+
+```powershell
+.\build.ps1 -SkipInstaller
+```
+
+Build MSI only:
+
+```powershell
+.\build.ps1 -SkipPortable
+```
+
+Debug build:
+
+```powershell
+dotnet build
+```
 
 ## Tech Stack
 
-- **C# / .NET 9.0** — WPF for UI, WinForms for system tray (`NotifyIcon`)
-- **ZXing.Net** — QR code decoding
-- **WiX Toolset v7** — MSI installer packaging
+- C# / .NET 9
+- WPF for result UI
+- WinForms `NotifyIcon` for tray integration
+- ZXing.Net for QR decoding
+- WiX Toolset for MSI packaging
 
 ## License
 
