@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using ZXing;
 using ZXing.Windows.Compatibility;
 
@@ -7,20 +9,25 @@ namespace QR_deFuzzer
 {
     public static class QrDecoder
     {
+        private static BarcodeReader CreateReader()
+        {
+            return new BarcodeReader
+            {
+                AutoRotate = true,
+                Options = new ZXing.Common.DecodingOptions
+                {
+                    TryHarder = true,
+                    TryInverted = true,
+                    PossibleFormats = new[] { BarcodeFormat.QR_CODE }
+                }
+            };
+        }
+
         public static string? Decode(Bitmap bitmap)
         {
             try
             {
-                var reader = new BarcodeReader
-                {
-                    AutoRotate = true,
-                    Options = new ZXing.Common.DecodingOptions
-                    {
-                        TryHarder = true,
-                        TryInverted = true,
-                        PossibleFormats = new[] { BarcodeFormat.QR_CODE }
-                    }
-                };
+                var reader = CreateReader();
 
                 var result = reader.Decode(bitmap);
                 if (result != null)
@@ -65,6 +72,73 @@ namespace QR_deFuzzer
                 System.Diagnostics.Debug.WriteLine($"Error decoding QR code: {ex.Message}");
                 return null;
             }
+        }
+
+        public static IReadOnlyList<string> DecodeAll(Bitmap bitmap)
+        {
+            try
+            {
+                var reader = CreateReader();
+                var texts = DecodeAllWithReader(reader, bitmap);
+                if (texts.Count > 0)
+                {
+                    AppLogger.Info($"Decoded {texts.Count} QR code(s) from original bitmap {bitmap.Width}x{bitmap.Height}.");
+                    return texts;
+                }
+
+                using Bitmap paddedBitmap = AddQuietZone(bitmap);
+                texts = DecodeAllWithReader(reader, paddedBitmap);
+                if (texts.Count > 0)
+                {
+                    AppLogger.Info($"Decoded {texts.Count} QR code(s) from padded bitmap {paddedBitmap.Width}x{paddedBitmap.Height}.");
+                    return texts;
+                }
+
+                using Bitmap? enlargedBitmap = Enlarge(bitmap);
+                if (enlargedBitmap != null)
+                {
+                    texts = DecodeAllWithReader(reader, enlargedBitmap);
+                    if (texts.Count > 0)
+                    {
+                        AppLogger.Info($"Decoded {texts.Count} QR code(s) from enlarged bitmap {enlargedBitmap.Width}x{enlargedBitmap.Height}.");
+                        return texts;
+                    }
+
+                    using Bitmap enlargedPaddedBitmap = AddQuietZone(enlargedBitmap);
+                    texts = DecodeAllWithReader(reader, enlargedPaddedBitmap);
+                    if (texts.Count > 0)
+                    {
+                        AppLogger.Info($"Decoded {texts.Count} QR code(s) from enlarged padded bitmap {enlargedPaddedBitmap.Width}x{enlargedPaddedBitmap.Height}.");
+                        return texts;
+                    }
+                }
+
+                AppLogger.Info($"No QR codes decoded from bitmap {bitmap.Width}x{bitmap.Height}.");
+                return Array.Empty<string>();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("Error decoding QR codes.", ex);
+                return Array.Empty<string>();
+            }
+        }
+
+        private static List<string> DecodeAllWithReader(BarcodeReader reader, Bitmap bitmap)
+        {
+            var results = reader.DecodeMultiple(bitmap);
+            if (results == null || results.Length == 0)
+            {
+                var singleResult = reader.Decode(bitmap);
+                return singleResult == null
+                    ? new List<string>()
+                    : new List<string> { singleResult.Text };
+            }
+
+            return results
+                .Where(result => !string.IsNullOrWhiteSpace(result.Text))
+                .Select(result => result.Text)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
         }
 
         private static Bitmap? Enlarge(Bitmap bitmap)

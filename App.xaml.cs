@@ -51,7 +51,7 @@ namespace QR_deFuzzer
             _trayIcon?.ShowBalloonTip(
                 3500,
                 "QR-deFuzzer is running",
-                "Use the tray icon to snip and decode a QR code.",
+                "Use the tray icon to scan visible screens for QR codes.",
                 System.Windows.Forms.ToolTipIcon.Info);
         }
 
@@ -62,7 +62,7 @@ namespace QR_deFuzzer
                 AppLogger.Info("Initializing tray icon.");
 
                 _trayIcon = new System.Windows.Forms.NotifyIcon();
-                _trayIcon.Text = "QR-deFuzzer - click to snip QR";
+                _trayIcon.Text = "QR-deFuzzer - click to scan QR";
                 _trayIcon.Visible = true;
 
                 // Load icon - prefer extracting from the EXE's embedded Win32 icon resource
@@ -102,7 +102,7 @@ namespace QR_deFuzzer
                 // Context Menu
                 _contextMenu = new System.Windows.Forms.ContextMenuStrip();
 
-                var snipItem = new System.Windows.Forms.ToolStripMenuItem("Snip & Decode QR");
+                var snipItem = new System.Windows.Forms.ToolStripMenuItem("Scan Screens for QR");
                 snipItem.Click += (s, ea) => StartSnipping();
                 snipItem.Font = new System.Drawing.Font(snipItem.Font, System.Drawing.FontStyle.Bold);
                 _contextMenu.Items.Add(snipItem);
@@ -168,29 +168,19 @@ namespace QR_deFuzzer
             _isSnippingOpen = true;
             try
             {
-                AppLogger.Info("Opening snipping overlay.");
-                using var snipper = new WinFormsSnippingOverlay();
-                snipper.ShowDialog();
-
-                if (snipper.SnippedSuccessfully)
+                AppLogger.Info("Scanning visible screens for QR codes.");
+                IReadOnlyList<ScreenQrScanResult> results = ScreenQrScanner.ScanAllScreens();
+                if (results.Count > 0)
                 {
-                    string? decodedText = snipper.DecodedText;
-                    if (!string.IsNullOrEmpty(decodedText))
-                    {
-                        AppLogger.Info("QR code decoded successfully.");
-                        // Open result display window
-                        var resultWindow = new ResultWindow(decodedText);
-                        resultWindow.ShowDialog();
-                    }
-                    else
-                    {
-                        AppLogger.Info("Snip completed but no QR code was detected.");
-                        // Display notification that no QR code was found
-                        if (_trayIcon != null)
-                        {
-                            _trayIcon.ShowBalloonTip(3000, "QR-deFuzzer", "No QR Code detected in the selected area.", System.Windows.Forms.ToolTipIcon.Warning);
-                        }
-                    }
+                    ScreenQrScanResult result = results[0];
+                    AppLogger.Info($"QR code decoded successfully from {result.Source}. ResultCount={results.Count}.");
+                    var resultWindow = new ResultWindow(result.Text);
+                    resultWindow.ShowDialog();
+                }
+                else
+                {
+                    AppLogger.Info("Screen scan completed but no QR code was detected.");
+                    _trayIcon?.ShowBalloonTip(3000, "QR-deFuzzer", "No QR Code detected on the visible screens.", System.Windows.Forms.ToolTipIcon.Warning);
                 }
             }
             catch (Exception ex)
