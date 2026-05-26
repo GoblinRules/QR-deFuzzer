@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.5 - 2026-05-26
+
+- Added a tray Settings window.
+- Added update checking and MSI download/install from the latest release.
+- Added help/about content inside Settings.
+- Moved debug screenshots to a dedicated cache folder.
+- Disabled screenshot saving by default; it can now be enabled only for debugging.
+- Added cache clearing and optional screenshot auto-delete after a configured number of minutes.
+
 ## v1.1.4 - 2026-05-26
 
 - Added a 2FA Details tab for OTP QR metadata and additional query parameters.

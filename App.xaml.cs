@@ -3,7 +3,6 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.Win32;
 
 namespace QR_deFuzzer
 {
@@ -12,10 +11,9 @@ namespace QR_deFuzzer
         private static Mutex? _mutex;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
         private System.Windows.Forms.ContextMenuStrip? _contextMenu;
+        private SettingsWindow? _settingsWindow;
         private bool _isSnippingOpen = false;
         private bool _isShuttingDown = false;
-
-        private const string SettingsKey = @"Software\QR-deFuzzer";
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
@@ -39,6 +37,7 @@ namespace QR_deFuzzer
 
             // Keep application running in background when no windows are open
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            ScreenshotCache.CleanupExpired();
 
             // 2. Initialize WinForms subsystem (required before creating NotifyIcon)
             System.Windows.Forms.Application.EnableVisualStyles();
@@ -111,6 +110,12 @@ namespace QR_deFuzzer
 
                 _contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
+                var settingsItem = new System.Windows.Forms.ToolStripMenuItem("Settings...");
+                settingsItem.Click += (s, ea) => ShowSettings();
+                _contextMenu.Items.Add(settingsItem);
+
+                _contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
                 // Run on Startup
                 var startupItem = new System.Windows.Forms.ToolStripMenuItem("Run on Startup");
                 startupItem.Checked = StartupHelper.IsRunOnStartupEnabled();
@@ -123,11 +128,11 @@ namespace QR_deFuzzer
 
                 // Auto-copy to Clipboard
                 var autoCopyItem = new System.Windows.Forms.ToolStripMenuItem("Auto-copy to Clipboard");
-                autoCopyItem.Checked = GetAutoCopySetting();
+                autoCopyItem.Checked = AppSettings.GetAutoCopy();
                 autoCopyItem.Click += (s, ea) => {
                     bool newState = !autoCopyItem.Checked;
-                    SetAutoCopySetting(newState);
-                    autoCopyItem.Checked = GetAutoCopySetting();
+                    AppSettings.SetAutoCopy(newState);
+                    autoCopyItem.Checked = AppSettings.GetAutoCopy();
                 };
                 _contextMenu.Items.Add(autoCopyItem);
 
@@ -266,46 +271,32 @@ namespace QR_deFuzzer
             }
         }
 
-        private bool GetAutoCopySetting()
-        {
-            try
-            {
-                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey))
-                {
-                    if (key != null)
-                    {
-                        object? val = key.GetValue("AutoCopy", 0);
-                        return val is int intVal && intVal == 1;
-                    }
-                }
-            }
-            catch { }
-            return false;
-        }
-
-        private void SetAutoCopySetting(bool enable)
-        {
-            try
-            {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(SettingsKey))
-                {
-                    key.SetValue("AutoCopy", enable ? 1 : 0);
-                }
-            }
-            catch { }
-        }
-
         private void ShowAbout()
         {
             MessageBox.Show(
-                "QR-deFuzzer v1.0\n\n" +
+                $"QR-deFuzzer v{UpdateService.CurrentVersion}\n\n" +
                 "A lightweight utility to capture and decode QR codes from your screen.\n" +
                 "Features native 2FA (otpauth) parsing and secret key extraction.\n\n" +
-                "Created for safe and fast authenticator adding.",
+                "Publisher: Ghost Kernel\n" +
+                "Website: https://ghostkernel.cc",
                 "About QR-deFuzzer",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
             );
+        }
+
+        private void ShowSettings()
+        {
+            if (_settingsWindow != null)
+            {
+                _settingsWindow.Activate();
+                return;
+            }
+
+            _settingsWindow = new SettingsWindow();
+            _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+            _settingsWindow.Show();
+            _settingsWindow.Activate();
         }
 
         private void ShutdownApp()

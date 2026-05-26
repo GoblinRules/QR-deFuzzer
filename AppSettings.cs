@@ -1,0 +1,95 @@
+using System;
+using System.IO;
+using Microsoft.Win32;
+
+namespace QR_deFuzzer
+{
+    internal static class AppSettings
+    {
+        private const string SettingsKey = @"Software\QR-deFuzzer";
+
+        public static string AppDataFolder =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "QR-deFuzzer");
+
+        public static string CacheFolder => Path.Combine(AppDataFolder, "Cache");
+
+        public static bool GetAutoCopy()
+        {
+            return GetBool("AutoCopy", false);
+        }
+
+        public static void SetAutoCopy(bool value)
+        {
+            SetBool("AutoCopy", value);
+        }
+
+        public static bool GetSaveDebugScreenshots()
+        {
+            return GetBool("SaveDebugScreenshots", false);
+        }
+
+        public static void SetSaveDebugScreenshots(bool value)
+        {
+            SetBool("SaveDebugScreenshots", value);
+        }
+
+        public static int GetAutoDeleteScreenshotMinutes()
+        {
+            try
+            {
+                using RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey);
+                object? value = key?.GetValue("AutoDeleteScreenshotMinutes", 0);
+                if (value is int intValue)
+                {
+                    return Math.Clamp(intValue, 0, 10080);
+                }
+            }
+            catch
+            {
+                // Ignore settings read errors.
+            }
+
+            return 0;
+        }
+
+        public static void SetAutoDeleteScreenshotMinutes(int minutes)
+        {
+            try
+            {
+                using RegistryKey key = Registry.CurrentUser.CreateSubKey(SettingsKey);
+                key.SetValue("AutoDeleteScreenshotMinutes", Math.Clamp(minutes, 0, 10080), RegistryValueKind.DWord);
+            }
+            catch
+            {
+                // Ignore settings save errors.
+            }
+        }
+
+        private static bool GetBool(string name, bool defaultValue)
+        {
+            try
+            {
+                using RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey);
+                object? value = key?.GetValue(name, defaultValue ? 1 : 0);
+                return value is int intValue ? intValue == 1 : defaultValue;
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        private static void SetBool(string name, bool value)
+        {
+            try
+            {
+                using RegistryKey key = Registry.CurrentUser.CreateSubKey(SettingsKey);
+                key.SetValue(name, value ? 1 : 0, RegistryValueKind.DWord);
+            }
+            catch
+            {
+                // Ignore settings save errors.
+            }
+        }
+    }
+}

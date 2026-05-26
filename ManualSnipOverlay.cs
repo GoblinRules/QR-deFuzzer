@@ -189,19 +189,7 @@ namespace QR_deFuzzer
 
         private static void SaveLastSnip(DrawingBitmap bitmap)
         {
-            try
-            {
-                string? directory = Path.GetDirectoryName(AppLogger.LogPath);
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                    bitmap.Save(Path.Combine(directory, "last-snip.png"), ImageFormat.Png);
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error("Failed to save manual snip image.", ex);
-            }
+            ScreenshotCache.Save(bitmap, "last-snip.png");
         }
 
         private static void DrawReticle(DrawingGraphics graphics, DrawingPoint point)

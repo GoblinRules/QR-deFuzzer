@@ -205,36 +205,12 @@ namespace QR_deFuzzer
 
         private static void SaveLastSnip(DrawingBitmap bitmap)
         {
-            try
-            {
-                string? directory = Path.GetDirectoryName(AppLogger.LogPath);
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                    bitmap.Save(Path.Combine(directory, "last-snip.png"), ImageFormat.Png);
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error("Failed to save last snip image.", ex);
-            }
+            ScreenshotCache.Save(bitmap, "last-snip.png");
         }
 
         private static void SaveDebugSnip(DrawingBitmap bitmap, string fileName)
         {
-            try
-            {
-                string? directory = Path.GetDirectoryName(AppLogger.LogPath);
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                    bitmap.Save(Path.Combine(directory, fileName), ImageFormat.Png);
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error($"Failed to save debug snip image {fileName}.", ex);
-            }
+            ScreenshotCache.Save(bitmap, fileName);
         }
 
         private void Cancel()

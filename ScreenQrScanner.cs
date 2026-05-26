@@ -123,19 +123,7 @@ namespace QR_deFuzzer
 
         private static void SaveDebugBitmap(Bitmap bitmap, string fileName)
         {
-            try
-            {
-                string? directory = Path.GetDirectoryName(AppLogger.LogPath);
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                    bitmap.Save(Path.Combine(directory, fileName), ImageFormat.Png);
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error($"Failed to save debug screen capture {fileName}.", ex);
-            }
+            ScreenshotCache.Save(bitmap, fileName);
         }
     }
 }

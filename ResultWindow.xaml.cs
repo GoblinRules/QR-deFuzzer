@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Win32;
 
 namespace QR_deFuzzer
 {
@@ -16,8 +15,6 @@ namespace QR_deFuzzer
         private string _rawSecret = "";
         private bool _isSecretRevealed = false;
 
-        private const string SettingsKey = @"Software\QR-deFuzzer";
-
         public ResultWindow(string decodedText)
         {
             InitializeComponent();
@@ -29,40 +26,12 @@ namespace QR_deFuzzer
 
         private void LoadSettings()
         {
-            try
-            {
-                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey))
-                {
-                    if (key != null)
-                    {
-                        object? autoCopyVal = key.GetValue("AutoCopy", 0);
-                        AutoCopyCheckBox.IsChecked = (autoCopyVal is int intVal && intVal == 1);
-                    }
-                    else
-                    {
-                        AutoCopyCheckBox.IsChecked = false;
-                    }
-                }
-            }
-            catch
-            {
-                AutoCopyCheckBox.IsChecked = false;
-            }
+            AutoCopyCheckBox.IsChecked = AppSettings.GetAutoCopy();
         }
 
         private void SaveSettings()
         {
-            try
-            {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(SettingsKey))
-                {
-                    key.SetValue("AutoCopy", AutoCopyCheckBox.IsChecked == true ? 1 : 0);
-                }
-            }
-            catch
-            {
-                // Ignore settings save errors
-            }
+            AppSettings.SetAutoCopy(AutoCopyCheckBox.IsChecked == true);
         }
 
         private void ProcessDecodedText()

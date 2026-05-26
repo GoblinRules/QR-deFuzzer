@@ -19,6 +19,8 @@ The app can scan all connected monitors automatically, or you can right-click th
 - URL detection with an open-in-browser action.
 - Optional auto-copy to clipboard.
 - Optional run-on-startup support.
+- Tray settings window with update checks, help/about, and screenshot cache controls.
+- Debug screenshot saving is disabled by default and can be enabled only when needed.
 - Per-user MSI installer and portable EXE release.
 
 ## Download
@@ -49,6 +51,7 @@ Press `Esc` or right-click during manual snip mode to cancel.
 
 - `Scan Screens for QR` scans connected monitors automatically.
 - `Manual Snip` opens a monitor selector for manual capture.
+- `Settings...` opens update, help/about, startup, auto-copy, and cache controls.
 - `Run on Startup` toggles per-user startup registration.
 - `Auto-copy to Clipboard` copies decoded QR text automatically after a successful scan.
 - `About QR-deFuzzer` shows app information.
@@ -91,6 +94,22 @@ Logs are written to:
 ```
 
 This is the first place to check if the tray icon does not appear, a monitor is not captured correctly, or QR decoding fails.
+
+## Screenshot Cache
+
+QR-deFuzzer does not save screenshots by default. In `Settings`, enable `Save screenshots for debugging` if you need cached captures while troubleshooting.
+
+When enabled, screenshots are written to:
+
+```text
+%LocalAppData%\QR-deFuzzer\Cache
+```
+
+The Settings window can clear this folder manually, or auto-delete cached screenshots after a configured number of minutes.
+
+## Updates
+
+Use `Settings...` from the tray menu to check for updates. If a newer GitHub release is available, QR-deFuzzer can download the latest MSI and launch the installer.
 
 ## Building
 
