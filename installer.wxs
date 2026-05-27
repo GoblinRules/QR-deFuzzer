@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
 
   <Package
     Name="QR-deFuzzer"
     Manufacturer="Ghost Kernel"
-    Version="1.1.9.0"
+    Version="1.1.10.0"
     UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
     Scope="perMachine"
     Compressed="yes">
@@ -16,6 +17,8 @@
     <MediaTemplate EmbedCab="yes" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
     <Property Id="ARPURLINFOABOUT" Value="https://ghostkernel.cc" />
+    <Property Id="STARTUP" Secure="yes" />
+    <Property Id="AUTOCOPY" Secure="yes" />
 
     <!-- Application Files -->
     <StandardDirectory Id="ProgramFiles64Folder">
@@ -37,26 +40,20 @@
                          Type="string"
                          Value="[INSTALLFOLDER]" />
         </Component>
-        <Component Id="InstalledAppsRegistration" Guid="4471794D-44B0-4CC9-9E9D-A336E8F9D0A8">
-          <RegistryKey Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\QR-deFuzzer">
-            <RegistryValue Name="DisplayName" Type="string" Value="QR-deFuzzer" />
-            <RegistryValue Name="DisplayVersion" Type="string" Value="1.1.9" />
-            <RegistryValue Name="Publisher" Type="string" Value="Ghost Kernel" />
-            <RegistryValue Name="InstallLocation" Type="string" Value="[INSTALLFOLDER]" />
-            <RegistryValue Name="DisplayIcon" Type="string" Value="[INSTALLFOLDER]QR-deFuzzer.exe" />
-            <RegistryValue Name="UninstallString" Type="string" Value="MsiExec.exe /x [ProductCode]" />
-            <RegistryValue Name="QuietUninstallString" Type="string" Value="MsiExec.exe /x [ProductCode] /qn" />
-            <RegistryValue Name="NoModify" Type="integer" Value="1" />
-            <RegistryValue Name="NoRepair" Type="integer" Value="1" />
-            <RegistryValue Name="EstimatedSize" Type="integer" Value="183000" KeyPath="yes" />
-          </RegistryKey>
-        </Component>
         <Component Id="StartupRegistration" Guid="D3296053-8F13-49D1-92F0-40E50FA480F8" Condition="STARTUP=1">
           <RegistryValue Root="HKLM"
                          Key="Software\Microsoft\Windows\CurrentVersion\Run"
                          Name="QR-deFuzzer"
                          Type="string"
                          Value="&quot;[INSTALLFOLDER]QR-deFuzzer.exe&quot;"
+                         KeyPath="yes" />
+        </Component>
+        <Component Id="AutoCopyDefault" Guid="7CB909D2-4493-4E20-958C-17B4B4382440" Condition="AUTOCOPY=1">
+          <RegistryValue Root="HKLM"
+                         Key="Software\QR-deFuzzer\Defaults"
+                         Name="AutoCopy"
+                         Type="integer"
+                         Value="1"
                          KeyPath="yes" />
         </Component>
       </Directory>
@@ -98,11 +95,29 @@
     <Feature Id="Complete" Title="QR-deFuzzer" Level="1">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="AppPathsRegistration" />
-      <ComponentRef Id="InstalledAppsRegistration" />
       <ComponentRef Id="StartupRegistration" />
+      <ComponentRef Id="AutoCopyDefault" />
       <ComponentRef Id="DesktopShortcut" />
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+    <UI>
+      <Dialog Id="OptionsDlg" Width="370" Height="270" Title="[ProductName] Setup">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="{\\WixUI_Font_Title}Setup Options" />
+        <Control Id="Description" Type="Text" X="20" Y="23" Width="330" Height="30" Transparent="yes" NoPrefix="yes" Text="Choose optional settings to apply during installation." />
+        <Control Id="StartupCheckbox" Type="CheckBox" X="20" Y="80" Width="310" Height="18" Property="STARTUP" CheckBoxValue="1" Text="Run QR-deFuzzer when Windows starts" />
+        <Control Id="AutoCopyCheckbox" Type="CheckBox" X="20" Y="105" Width="310" Height="18" Property="AUTOCOPY" CheckBoxValue="1" Text="Auto-copy decoded QR text to clipboard by default" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="Back" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="Next" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel" />
+      </Dialog>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="OptionsDlg" Condition="1" />
+      <Publish Dialog="OptionsDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Condition="1" />
+      <Publish Dialog="OptionsDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="1" />
+      <Publish Dialog="OptionsDlg" Control="Cancel" Event="SpawnDialog" Value="CancelDlg" Condition="1" />
+    </UI>
 
   </Package>
 </Wix>

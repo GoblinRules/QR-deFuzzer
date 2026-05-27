@@ -74,6 +74,12 @@ Silent install with Windows startup enabled:
 msiexec /i QR-deFuzzer-Setup.msi /qn /norestart STARTUP=1
 ```
 
+Silent install with startup and auto-copy enabled:
+
+```powershell
+msiexec /i QR-deFuzzer-Setup.msi /qn /norestart STARTUP=1 AUTOCOPY=1
+```
+
 Silent uninstall:
 
 ```powershell
@@ -88,6 +94,7 @@ QR-deFuzzer is packaged as a machine-wide MSI. For tools such as Action1, the de
 
 - Use the MSI, not the portable EXE, for managed deployment.
 - Use `STARTUP=1` if you want QR-deFuzzer to start when users sign in.
+- Use `AUTOCOPY=1` if you want decoded QR text copied to the clipboard by default.
 - The app still writes logs and optional debug screenshot cache under each user's `%LocalAppData%` when it runs.
 
 ### Action1 Install Script
@@ -97,13 +104,13 @@ Upload `QR-deFuzzer-Setup.msi` to Action1 and deploy it as a Windows Installer p
 Additional MSI properties:
 
 ```text
-STARTUP=1
+STARTUP=1 AUTOCOPY=1
 ```
 
 Action1 command preview should look similar to:
 
 ```powershell
-msiexec.exe /i "QR-deFuzzer-Setup.msi" /quiet /qn /norestart STARTUP=1
+msiexec.exe /i "QR-deFuzzer-Setup.msi" /quiet /qn /norestart STARTUP=1 AUTOCOPY=1
 ```
 
 This installs QR-deFuzzer to:
@@ -125,13 +132,14 @@ msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart
 ```
 
 Users can later enable per-user startup from `Settings > General`, but managed deployments should prefer `STARTUP=1`.
+Users can also override auto-copy from `Settings > General`.
 
 ### Update Existing Installs
 
 Deploy the newer MSI with the same command. The installer uses a major upgrade, so it replaces the older install:
 
 ```powershell
-msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart STARTUP=1
+msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart STARTUP=1 AUTOCOPY=1
 ```
 
 ### Uninstall
@@ -146,10 +154,10 @@ For Action1 detection rules, check one of these machine-wide locations:
 
 ```text
 %ProgramFiles%\QR-deFuzzer\QR-deFuzzer.exe
-HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\QR-deFuzzer
+HKLM\Software\Microsoft\Windows\CurrentVersion\App Paths\QR-deFuzzer.exe
 ```
 
-The installed app registration includes `DisplayVersion`, so the uninstall registry key can be used for version checks.
+Programs & Features version checks can also use the standard Windows Installer uninstall entry for `QR-deFuzzer`.
 
 ## Logs
 

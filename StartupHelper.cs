@@ -63,8 +63,14 @@ namespace QR_deFuzzer
                         object? value = key.GetValue(AppName);
                         if (value is string path)
                         {
+                            string normalized = path.Trim().Trim('"');
                             string currentPath = Environment.ProcessPath ?? "";
-                            return string.Equals(path.Trim('"'), currentPath, StringComparison.OrdinalIgnoreCase);
+                            if (string.Equals(normalized, currentPath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                return true;
+                            }
+
+                            return normalized.EndsWith("QR-deFuzzer.exe", StringComparison.OrdinalIgnoreCase);
                         }
                     }
                 }

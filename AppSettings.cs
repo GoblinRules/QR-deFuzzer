@@ -7,6 +7,7 @@ namespace QR_deFuzzer
     internal static class AppSettings
     {
         private const string SettingsKey = @"Software\QR-deFuzzer";
+        private const string MachineDefaultsKey = @"Software\QR-deFuzzer\Defaults";
 
         public static string AppDataFolder =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "QR-deFuzzer");
@@ -112,13 +113,25 @@ namespace QR_deFuzzer
             try
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey);
-                object? value = key?.GetValue(name, defaultValue ? 1 : 0);
-                return value is int intValue ? intValue == 1 : defaultValue;
+                object? value = key?.GetValue(name);
+                if (value is int intValue)
+                {
+                    return intValue == 1;
+                }
+
+                using RegistryKey? machineKey = Registry.LocalMachine.OpenSubKey(MachineDefaultsKey);
+                object? machineValue = machineKey?.GetValue(name);
+                if (machineValue is int machineIntValue)
+                {
+                    return machineIntValue == 1;
+                }
             }
             catch
             {
-                return defaultValue;
+                // Ignore settings read errors.
             }
+
+            return defaultValue;
         }
 
         private static void SetBool(string name, bool value)

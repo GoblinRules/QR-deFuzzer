@@ -73,6 +73,7 @@ if (-not $SkipInstaller) {
     
     wix build `
         -src (Join-Path $ProjectDir "installer.wxs") `
+        -ext WixToolset.UI.wixext `
         -d PublishDir=$publishDir `
         -d ProjectDir=$ProjectDir `
         -o $msiOutput

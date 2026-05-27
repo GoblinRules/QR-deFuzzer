@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.10 - 2026-05-27
+
+- Fixed duplicate Programs & Features entries by removing the custom uninstall registry entry.
+- The MSI now relies on Windows Installer's standard app registration.
+- Added manual MSI install options for startup and default auto-copy.
+- Added `AUTOCOPY=1` MSI property for Action1/RMM deployment.
+- Startup detection now recognizes machine-wide Run entries even if the app was launched from another path.
+
 ## v1.1.9 - 2026-05-27
 
 - Changed the MSI to a proper machine-wide installer for Action1/RMM deployment.
