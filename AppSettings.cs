@@ -33,6 +33,48 @@ namespace QR_deFuzzer
             SetBool("SaveDebugScreenshots", value);
         }
 
+        public static bool GetAutoCheckUpdates()
+        {
+            return GetBool("AutoCheckUpdates", true);
+        }
+
+        public static void SetAutoCheckUpdates(bool value)
+        {
+            SetBool("AutoCheckUpdates", value);
+        }
+
+        public static DateTime? GetLastUpdateCheckUtc()
+        {
+            try
+            {
+                using RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey);
+                object? value = key?.GetValue("LastUpdateCheckUtc", "");
+                if (value is string text && DateTime.TryParse(text, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime timestamp))
+                {
+                    return timestamp.ToUniversalTime();
+                }
+            }
+            catch
+            {
+                // Ignore settings read errors.
+            }
+
+            return null;
+        }
+
+        public static void SetLastUpdateCheckUtc(DateTime timestampUtc)
+        {
+            try
+            {
+                using RegistryKey key = Registry.CurrentUser.CreateSubKey(SettingsKey);
+                key.SetValue("LastUpdateCheckUtc", timestampUtc.ToUniversalTime().ToString("O"), RegistryValueKind.String);
+            }
+            catch
+            {
+                // Ignore settings save errors.
+            }
+        }
+
         public static int GetAutoDeleteScreenshotMinutes()
         {
             try

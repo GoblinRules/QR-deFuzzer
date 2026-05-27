@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -52,6 +53,8 @@ namespace QR_deFuzzer
                 "QR-deFuzzer is running",
                 "Left-click to scan visible screens, or right-click for manual snip.",
                 System.Windows.Forms.ToolTipIcon.Info);
+
+            _ = Dispatcher.BeginInvoke(async () => await CheckForDailyUpdateAsync(), DispatcherPriority.ApplicationIdle);
         }
 
         private void InitializeTrayIcon()
@@ -303,6 +306,60 @@ namespace QR_deFuzzer
             _settingsWindow.Closed += (s, e) => _settingsWindow = null;
             _settingsWindow.Show();
             _settingsWindow.Activate();
+        }
+
+        private async Task CheckForDailyUpdateAsync()
+        {
+            if (!AppSettings.GetAutoCheckUpdates())
+            {
+                AppLogger.Info("Daily update check skipped because auto-check is disabled.");
+                return;
+            }
+
+            DateTime? lastCheckUtc = AppSettings.GetLastUpdateCheckUtc();
+            if (lastCheckUtc.HasValue && DateTime.UtcNow - lastCheckUtc.Value < TimeSpan.FromDays(1))
+            {
+                AppLogger.Info($"Daily update check skipped. LastCheckUtc={lastCheckUtc.Value:O}.");
+                return;
+            }
+
+            try
+            {
+                AppLogger.Info("Running daily update check.");
+                UpdateInfo update = await UpdateService.CheckForUpdateAsync();
+                AppSettings.SetLastUpdateCheckUtc(DateTime.UtcNow);
+
+                if (!update.IsNewer)
+                {
+                    AppLogger.Info($"Daily update check complete. Current version {UpdateService.CurrentVersion} is up to date.");
+                    return;
+                }
+
+                AppLogger.Info($"Daily update check found v{update.Version}.");
+                MessageBoxResult choice = MessageBox.Show(
+                    $"QR-deFuzzer v{update.Version} is available.\n\nCurrent version: v{UpdateService.CurrentVersion}\n\nDownload and install the update now?",
+                    "QR-deFuzzer Update Available",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (choice != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+
+                string installerPath = await UpdateService.DownloadInstallerAsync(update);
+                UpdateService.StartInstaller(installerPath);
+                MessageBox.Show(
+                    "The installer has been started. QR-deFuzzer will now close so the update can complete.",
+                    "Update Started",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                ShutdownApp();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("Daily update check failed.", ex);
+            }
         }
 
         private void ShutdownApp()

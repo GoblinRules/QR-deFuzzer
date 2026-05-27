@@ -81,7 +81,7 @@
                                     CornerRadius="3"
                                     Margin="0,0,8,0">
                                 <TextBlock x:Name="tick"
-                                           Text="✓"
+                                           Text="X"
                                            Foreground="#00E5FF"
                                            FontSize="12"
                                            FontWeight="Bold"
@@ -244,6 +244,11 @@
                 <TabItem Header="Updates">
                     <Border Background="#1C1C24" BorderBrush="#2C2C38" BorderThickness="1" CornerRadius="0,8,8,8" Padding="14">
                         <StackPanel>
+                            <CheckBox Name="AutoCheckUpdatesCheckBox"
+                                      Content="Automatically check for updates once per day"
+                                      Margin="0,0,0,12"
+                                      Checked="AutoCheckUpdatesCheckBox_Changed"
+                                      Unchecked="AutoCheckUpdatesCheckBox_Changed"/>
                             <TextBlock Text="Update checks use the latest GitHub release for this project."
                                        Foreground="#CCFFFFFF"
                                        TextWrapping="Wrap"

@@ -19,7 +19,7 @@ The app can scan all connected monitors automatically, or you can right-click th
 - URL detection with an open-in-browser action.
 - Optional auto-copy to clipboard.
 - Optional run-on-startup support.
-- Tray settings window with update checks, help/about, and screenshot cache controls.
+- Tray settings window with update checks, daily auto-check toggle, help/about, and screenshot cache controls.
 - Debug screenshot saving is disabled by default and can be enabled only when needed.
 - Per-user MSI installer and portable EXE release.
 
@@ -107,6 +107,8 @@ The Settings window can clear this folder manually, or auto-delete cached screen
 ## Updates
 
 Use `Settings...` from the tray menu to check for updates. If a newer GitHub release is available, QR-deFuzzer can download the latest MSI and launch the installer.
+
+QR-deFuzzer can also check for updates automatically once per day on startup. This is enabled by default and can be toggled in the `Updates` tab.
 
 ## Building
 

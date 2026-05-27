@@ -26,6 +26,7 @@ namespace QR_deFuzzer
                 VersionTextBlock.Text = $"Version {UpdateService.CurrentVersion}";
                 RunOnStartupCheckBox.IsChecked = StartupHelper.IsRunOnStartupEnabled();
                 AutoCopyCheckBox.IsChecked = AppSettings.GetAutoCopy();
+                AutoCheckUpdatesCheckBox.IsChecked = AppSettings.GetAutoCheckUpdates();
                 SaveScreenshotsCheckBox.IsChecked = AppSettings.GetSaveDebugScreenshots();
 
                 int autoDeleteMinutes = AppSettings.GetAutoDeleteScreenshotMinutes();
@@ -61,6 +62,15 @@ namespace QR_deFuzzer
             if (_isLoading) return;
             AppSettings.SetAutoCopy(AutoCopyCheckBox.IsChecked == true);
             ShowFooterStatus("Auto-copy setting saved.");
+        }
+
+        private void AutoCheckUpdatesCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isLoading) return;
+            AppSettings.SetAutoCheckUpdates(AutoCheckUpdatesCheckBox.IsChecked == true);
+            ShowFooterStatus(AutoCheckUpdatesCheckBox.IsChecked == true
+                ? "Daily update checks enabled."
+                : "Daily update checks disabled.");
         }
 
         private void SaveScreenshotsCheckBox_Changed(object sender, RoutedEventArgs e)

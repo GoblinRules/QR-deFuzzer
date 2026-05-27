@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.8 - 2026-05-27
+
+- Added automatic daily update checks on startup.
+- Added a Settings toggle for daily update checks.
+- Prompts to download and install the latest MSI when a newer release is available.
+
 ## v1.1.7 - 2026-05-26
 
 - Restyled the tray right-click menu to match the QR-deFuzzer dark UI.
