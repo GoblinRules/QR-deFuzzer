@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.11 - 2026-05-27
+
+- Fixed installer-applied auto-copy defaults being hidden by stale per-user settings.
+- Startup detection now treats an existing QR-deFuzzer machine-wide Run entry as enabled.
+- MSI now attempts to close a running QR-deFuzzer tray process before install/upgrade.
+- Interactive MSI installs launch QR-deFuzzer after installation completes.
+
 ## v1.1.10 - 2026-05-27
 
 - Fixed duplicate Programs & Features entries by removing the custom uninstall registry entry.

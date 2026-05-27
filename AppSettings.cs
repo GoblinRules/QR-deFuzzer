@@ -114,7 +114,9 @@ namespace QR_deFuzzer
             {
                 using RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsKey);
                 object? value = key?.GetValue(name);
-                if (value is int intValue)
+                bool hasUserOverride = key?.GetValue($"{name}UserOverride") is int overrideValue && overrideValue == 1;
+
+                if (value is int intValue && hasUserOverride)
                 {
                     return intValue == 1;
                 }
@@ -124,6 +126,11 @@ namespace QR_deFuzzer
                 if (machineValue is int machineIntValue)
                 {
                     return machineIntValue == 1;
+                }
+
+                if (value is int fallbackIntValue)
+                {
+                    return fallbackIntValue == 1;
                 }
             }
             catch
@@ -140,6 +147,7 @@ namespace QR_deFuzzer
             {
                 using RegistryKey key = Registry.CurrentUser.CreateSubKey(SettingsKey);
                 key.SetValue(name, value ? 1 : 0, RegistryValueKind.DWord);
+                key.SetValue($"{name}UserOverride", 1, RegistryValueKind.DWord);
             }
             catch
             {

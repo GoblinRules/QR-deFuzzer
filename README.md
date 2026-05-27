@@ -113,6 +113,8 @@ Action1 command preview should look similar to:
 msiexec.exe /i "QR-deFuzzer-Setup.msi" /quiet /qn /norestart STARTUP=1 AUTOCOPY=1
 ```
 
+Do not prefix these properties with `/`. Use `STARTUP=1 AUTOCOPY=1`, not `/STARTUP=1 /AUTOCOPY=1`.
+
 This installs QR-deFuzzer to:
 
 ```text
@@ -133,6 +135,8 @@ msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart
 
 Users can later enable per-user startup from `Settings > General`, but managed deployments should prefer `STARTUP=1`.
 Users can also override auto-copy from `Settings > General`.
+
+Interactive/manual MSI installs include a `Setup Options` page with checkboxes for startup and auto-copy. Silent Action1 installs should use the MSI properties above.
 
 ### Update Existing Installs
 
