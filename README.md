@@ -21,7 +21,7 @@ The app can scan all connected monitors automatically, or you can right-click th
 - Optional run-on-startup support.
 - Tray settings window with update checks, daily auto-check toggle, help/about, and screenshot cache controls.
 - Debug screenshot saving is disabled by default and can be enabled only when needed.
-- Per-user MSI installer and portable EXE release.
+- Machine-wide MSI installer and portable EXE release.
 
 ## Download
 
@@ -30,7 +30,7 @@ Download the latest release from the [Releases](../../releases) page.
 Release assets:
 
 - `QR-deFuzzer-Portable.exe` - portable self-contained EXE.
-- `QR-deFuzzer-Setup.msi` - per-user MSI installer.
+- `QR-deFuzzer-Setup.msi` - machine-wide MSI installer.
 
 Publisher metadata is set to `Ghost Kernel`, with product information pointing to `https://ghostkernel.cc`.
 
@@ -56,10 +56,10 @@ Press `Esc` or right-click during manual snip mode to cancel.
 
 ## MSI Deployment
 
-The MSI is a per-user install. It installs to:
+The MSI is a machine-wide install. It installs to:
 
 ```text
-%LocalAppData%\QR-deFuzzer
+%ProgramFiles%\QR-deFuzzer
 ```
 
 Silent install:
@@ -80,34 +80,42 @@ Silent uninstall:
 msiexec /x QR-deFuzzer-Setup.msi /qn /norestart
 ```
 
-For Action1 or another RMM, run the installer in the logged-on user context when using `STARTUP=1`. The startup entry is written to `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, so a SYSTEM install writes startup for the SYSTEM profile rather than the interactive user.
+For Action1 or another RMM, deploy the MSI in the default managed/SYSTEM context. `STARTUP=1` writes a machine-wide startup entry to `HKLM\Software\Microsoft\Windows\CurrentVersion\Run`, so QR-deFuzzer starts for users when they sign in.
 
 ## Action1 / RMM Deployment
 
-QR-deFuzzer is packaged as a per-user app. For tools such as Action1, the important deployment choice is the execution context:
+QR-deFuzzer is packaged as a machine-wide MSI. For tools such as Action1, the default managed/SYSTEM context is the right choice.
 
-- Use the logged-on user context when installing with `STARTUP=1`.
-- Avoid SYSTEM context for startup deployment, because `HKCU` will resolve to the SYSTEM profile.
 - Use the MSI, not the portable EXE, for managed deployment.
+- Use `STARTUP=1` if you want QR-deFuzzer to start when users sign in.
+- The app still writes logs and optional debug screenshot cache under each user's `%LocalAppData%` when it runs.
 
 ### Action1 Install Script
 
-Upload `QR-deFuzzer-Setup.msi` to Action1, then run this in the logged-on user context:
+Upload `QR-deFuzzer-Setup.msi` to Action1 and deploy it as a Windows Installer package.
+
+Additional MSI properties:
+
+```text
+STARTUP=1
+```
+
+Action1 command preview should look similar to:
 
 ```powershell
-msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart STARTUP=1
+msiexec.exe /i "QR-deFuzzer-Setup.msi" /quiet /qn /norestart STARTUP=1
 ```
 
 This installs QR-deFuzzer to:
 
 ```text
-%LocalAppData%\QR-deFuzzer
+%ProgramFiles%\QR-deFuzzer
 ```
 
 and registers startup here:
 
 ```text
-HKCU\Software\Microsoft\Windows\CurrentVersion\Run\QR-deFuzzer
+HKLM\Software\Microsoft\Windows\CurrentVersion\Run\QR-deFuzzer
 ```
 
 ### Install Without Startup
@@ -116,11 +124,11 @@ HKCU\Software\Microsoft\Windows\CurrentVersion\Run\QR-deFuzzer
 msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart
 ```
 
-Users can later enable startup from `Settings > General`.
+Users can later enable per-user startup from `Settings > General`, but managed deployments should prefer `STARTUP=1`.
 
 ### Update Existing Installs
 
-Deploy the newer MSI with the same command. The installer uses a major upgrade, so it replaces the older per-user install:
+Deploy the newer MSI with the same command. The installer uses a major upgrade, so it replaces the older install:
 
 ```powershell
 msiexec /i "QR-deFuzzer-Setup.msi" /qn /norestart STARTUP=1
@@ -134,11 +142,11 @@ msiexec /x "QR-deFuzzer-Setup.msi" /qn /norestart
 
 ### Detection Hints
 
-For Action1 detection rules, check one of these per-user locations:
+For Action1 detection rules, check one of these machine-wide locations:
 
 ```text
-%LocalAppData%\QR-deFuzzer\QR-deFuzzer.exe
-HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\QR-deFuzzer
+%ProgramFiles%\QR-deFuzzer\QR-deFuzzer.exe
+HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\QR-deFuzzer
 ```
 
 The installed app registration includes `DisplayVersion`, so the uninstall registry key can be used for version checks.

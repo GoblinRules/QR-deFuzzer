@@ -10,9 +10,53 @@ namespace QR_deFuzzer
 
         public static bool IsRunOnStartupEnabled()
         {
+            return IsRunValueEnabled(Registry.CurrentUser) || IsRunValueEnabled(Registry.LocalMachine);
+        }
+
+        public static bool SetRunOnStartup(bool enable)
+        {
             try
             {
-                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey))
+                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey, true))
+                {
+                    if (key != null)
+                    {
+                        if (enable)
+                        {
+                            string currentPath = Environment.ProcessPath ?? "";
+                            if (!string.IsNullOrEmpty(currentPath))
+                            {
+                                key.SetValue(AppName, $"\"{currentPath}\"");
+                                return true;
+                            }
+
+                            return false;
+                        }
+
+                        key.DeleteValue(AppName, false);
+
+                        if (IsRunValueEnabled(Registry.LocalMachine))
+                        {
+                            return TryDeleteMachineStartupValue();
+                        }
+
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore registry write errors.
+            }
+
+            return false;
+        }
+
+        private static bool IsRunValueEnabled(RegistryKey root)
+        {
+            try
+            {
+                using (RegistryKey? key = root.OpenSubKey(RunKey))
                 {
                     if (key != null)
                     {
@@ -27,37 +71,23 @@ namespace QR_deFuzzer
             }
             catch
             {
-                // Ignore registry read errors
+                // Ignore registry read errors.
             }
+
             return false;
         }
 
-        public static void SetRunOnStartup(bool enable)
+        private static bool TryDeleteMachineStartupValue()
         {
             try
             {
-                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey, true))
-                {
-                    if (key != null)
-                    {
-                        if (enable)
-                        {
-                            string currentPath = Environment.ProcessPath ?? "";
-                            if (!string.IsNullOrEmpty(currentPath))
-                            {
-                                key.SetValue(AppName, $"\"{currentPath}\"");
-                            }
-                        }
-                        else
-                        {
-                            key.DeleteValue(AppName, false);
-                        }
-                    }
-                }
+                using RegistryKey? key = Registry.LocalMachine.OpenSubKey(RunKey, true);
+                key?.DeleteValue(AppName, false);
+                return true;
             }
             catch
             {
-                // Ignore registry write errors (e.g. permission issues, though HKCU usually doesn't need admin)
+                return false;
             }
         }
     }

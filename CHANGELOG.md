@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.9 - 2026-05-27
+
+- Changed the MSI to a proper machine-wide installer for Action1/RMM deployment.
+- MSI now installs to Program Files instead of the installing user's LocalAppData.
+- `STARTUP=1` now writes a machine-wide HKLM Run entry so SYSTEM-context deployments start for users at sign-in.
+- Updated Action1 deployment documentation.
+
 ## v1.1.8 - 2026-05-27
 
 - Added automatic daily update checks on startup.

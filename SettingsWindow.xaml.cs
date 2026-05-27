@@ -53,8 +53,10 @@ namespace QR_deFuzzer
         private void RunOnStartupCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             if (_isLoading) return;
-            StartupHelper.SetRunOnStartup(RunOnStartupCheckBox.IsChecked == true);
-            ShowFooterStatus("Startup setting saved.");
+            bool saved = StartupHelper.SetRunOnStartup(RunOnStartupCheckBox.IsChecked == true);
+            ShowFooterStatus(saved
+                ? "Startup setting saved."
+                : "Startup setting could not be changed. It may be managed by the machine-wide installer.");
         }
 
         private void AutoCopyCheckBox_Changed(object sender, RoutedEventArgs e)
