@@ -191,6 +191,8 @@ Use `Settings...` from the tray menu to check for updates. If a newer GitHub rel
 
 QR-deFuzzer can also check for updates automatically once per day on startup. This is enabled by default and can be toggled in the `Updates` tab.
 
+When QR-deFuzzer starts an update from inside the app, it passes `LAUNCHAPP=1` to the MSI so the app reopens after the update completes.
+
 ## Building
 
 Prerequisites:
@@ -239,3 +241,15 @@ dotnet build
 ## License
 
 MIT
+
+## Privacy
+
+Privacy policy: https://ghostkernel.cc/#/privacy
+
+## Disclaimer
+
+QR-deFuzzer is provided as a utility for decoding QR codes displayed on your own screen. QR codes may contain sensitive information, including TOTP enrolment secrets, account identifiers, URLs, and authentication setup data. Review decoded values carefully before copying, saving, opening, or sharing them.
+
+QR-deFuzzer processes screen captures locally. Debug screenshot saving is disabled by default, but if enabled, cached screenshots may contain anything visible in the selected screen area. Clear the cache after troubleshooting and avoid enabling debug screenshots on systems that display sensitive information unless necessary.
+
+QR-deFuzzer is provided without warranty. You are responsible for verifying decoded QR contents and for using the app in accordance with your organisation's security policies and applicable laws.

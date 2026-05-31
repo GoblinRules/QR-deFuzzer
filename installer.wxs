@@ -6,7 +6,7 @@
   <Package
     Name="QR-deFuzzer"
     Manufacturer="Ghost Kernel"
-    Version="1.1.11.0"
+    Version="1.1.12.0"
     UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
     Scope="perMachine"
     Compressed="yes">
@@ -26,13 +26,14 @@
     <Property Id="ARPURLINFOABOUT" Value="https://ghostkernel.cc" />
     <Property Id="STARTUP" Secure="yes" />
     <Property Id="AUTOCOPY" Secure="yes" />
+    <Property Id="LAUNCHAPP" Secure="yes" />
     <CustomAction Id="LaunchQRdeFuzzer"
                   FileRef="QRdeFuzzerExe"
                   ExeCommand=""
                   Return="asyncNoWait"
                   Impersonate="yes" />
     <InstallExecuteSequence>
-      <Custom Action="LaunchQRdeFuzzer" After="InstallFinalize" Condition="NOT Installed AND UILevel &gt;= 3" />
+      <Custom Action="LaunchQRdeFuzzer" After="InstallFinalize" Condition="(NOT REMOVE~=&quot;ALL&quot;) AND (LAUNCHAPP=1 OR (NOT Installed AND UILevel &gt;= 3))" />
     </InstallExecuteSequence>
 
     <!-- Application Files -->

@@ -336,24 +336,17 @@ namespace QR_deFuzzer
                 }
 
                 AppLogger.Info($"Daily update check found v{update.Version}.");
-                MessageBoxResult choice = MessageBox.Show(
-                    $"QR-deFuzzer v{update.Version} is available.\n\nCurrent version: v{UpdateService.CurrentVersion}\n\nDownload and install the update now?",
-                    "QR-deFuzzer Update Available",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Information);
-
-                if (choice != MessageBoxResult.Yes)
+                var prompt = new UpdatePromptWindow(update.Version, UpdateService.CurrentVersion);
+                if (prompt.ShowDialog() != true)
                 {
                     return;
                 }
 
                 string installerPath = await UpdateService.DownloadInstallerAsync(update);
-                UpdateService.StartInstaller(installerPath);
-                MessageBox.Show(
-                    "The installer has been started. QR-deFuzzer will now close so the update can complete.",
+                UpdateService.StartInstaller(installerPath, launchAfterInstall: true);
+                ThemedInfoWindow.Show(
                     "Update Started",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "The installer has been started. QR-deFuzzer will close now and reopen after the update completes.");
                 ShutdownApp();
             }
             catch (Exception ex)

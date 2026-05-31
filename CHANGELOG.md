@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.12 - 2026-05-31
+
+- App-triggered updates now pass `LAUNCHAPP=1` to the MSI so QR-deFuzzer reopens after the update completes.
+- Replaced the update prompts with QR-deFuzzer themed dialogs.
+- Updated README privacy and disclaimer notes for store submission.
+
 ## v1.1.11 - 2026-05-27
 
 - Fixed installer-applied auto-copy defaults being hidden by stale per-user settings.

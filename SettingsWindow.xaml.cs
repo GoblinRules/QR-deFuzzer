@@ -195,13 +195,11 @@ namespace QR_deFuzzer
 
                 string installerPath = await UpdateService.DownloadInstallerAsync(_latestUpdate);
                 UpdateStatusTextBlock.Text = "Starting installer...";
-                UpdateService.StartInstaller(installerPath);
+                UpdateService.StartInstaller(installerPath, launchAfterInstall: true);
 
-                MessageBox.Show(
-                    "The installer has been started. QR-deFuzzer will now close so the update can complete.",
+                ThemedInfoWindow.Show(
                     "Update Started",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "The installer has been started. QR-deFuzzer will close now and reopen after the update completes.");
                 Application.Current.Shutdown();
             }
             catch (Exception ex)

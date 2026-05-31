@@ -75,12 +75,13 @@ namespace QR_deFuzzer
             return installerPath;
         }
 
-        public static void StartInstaller(string installerPath)
+        public static void StartInstaller(string installerPath, bool launchAfterInstall = false)
         {
+            string launchProperty = launchAfterInstall ? " LAUNCHAPP=1" : "";
             Process.Start(new ProcessStartInfo
             {
                 FileName = "msiexec.exe",
-                Arguments = $"/i \"{installerPath}\" /passive /norestart",
+                Arguments = $"/i \"{installerPath}\" /passive /norestart{launchProperty}",
                 UseShellExecute = true
             });
         }
